@@ -148,12 +148,6 @@ class _MainNavigationState extends State<MainNavigation> {
   }
 }
 
-
-
-
-
-
-
 class CameraPage extends StatefulWidget {
   final Color themeColor;
   final VoidCallback onPhotoTaken;
@@ -163,16 +157,8 @@ class CameraPage extends StatefulWidget {
   State<CameraPage> createState() => _CameraPageState();
 }
 
-<<<<<<< HEAD
 class _CameraPageState extends State<CameraPage> {
   File? _lastImage; // 마지막으로 찍은 사진을 저장
-=======
-class _CameraPageState extends State<CameraPage> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _borderScaleAnimation; // 깜빡이는 직사각형 크기 애니메이션
-  File? _lastImage; // 마지막으로 찍은 사진을 저장
-  double? _imageAspectRatio; // 사진의 가로세로 비율
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
 
   // 테마 색상에서 연한 색상을 계산하는 함수
   Color _getLighterThemeColor(Color themeColor) {
@@ -187,16 +173,6 @@ class _CameraPageState extends State<CameraPage> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-<<<<<<< HEAD
-=======
-    // 애니메이션 컨트롤러 설정 (테두리 크기 깜빡임 효과)
-    _controller = AnimationController(
-      duration: const Duration(seconds: 1),
-      vsync: this,
-    )..repeat(reverse: true);
-    _borderScaleAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(_controller); // 크기 깜빡임
-
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
     // 이전에 찍은 사진 불러오기
     _loadLastImage();
   }
@@ -213,17 +189,8 @@ class _CameraPageState extends State<CameraPage> with SingleTickerProviderStateM
       if (files.isNotEmpty) {
         // 가장 최근 파일을 선택 (파일 이름에 타임스탬프가 있으므로 정렬 가능)
         files.sort((a, b) => b.path.compareTo(a.path));
-<<<<<<< HEAD
         setState(() {
           _lastImage = files.first;
-=======
-        final imageFile = files.first;
-        // 이미지의 가로세로 비율 계산
-        final image = await decodeImageFromList(imageFile.readAsBytesSync());
-        setState(() {
-          _lastImage = imageFile;
-          _imageAspectRatio = image.width / image.height;
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
         });
       }
     }
@@ -231,10 +198,6 @@ class _CameraPageState extends State<CameraPage> with SingleTickerProviderStateM
 
   @override
   void dispose() {
-<<<<<<< HEAD
-=======
-    _controller.dispose();
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
     super.dispose();
   }
 
@@ -247,7 +210,6 @@ class _CameraPageState extends State<CameraPage> with SingleTickerProviderStateM
       if (!await photoDir.exists()) {
         await photoDir.create(recursive: true);
       }
-<<<<<<< HEAD
       final fileName = 'insect_${DateTime
           .now()
           .millisecondsSinceEpoch}.jpg';
@@ -255,15 +217,6 @@ class _CameraPageState extends State<CameraPage> with SingleTickerProviderStateM
           '${photoDir.path}/$fileName');
       setState(() {
         _lastImage = newFile; // 새로 찍은 사진을 바로 표시
-=======
-      final fileName = 'insect_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final newFile = await File(pickedFile.path).copy('${photoDir.path}/$fileName');
-      // 새로 찍은 사진의 가로세로 비율 계산
-      final image = await decodeImageFromList(newFile.readAsBytesSync());
-      setState(() {
-        _lastImage = newFile; // 새로 찍은 사진을 바로 표시
-        _imageAspectRatio = image.width / image.height;
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
       });
       widget.onPhotoTaken();
     }
@@ -296,7 +249,6 @@ class _CameraPageState extends State<CameraPage> with SingleTickerProviderStateM
             )
                 : null,
           ),
-<<<<<<< HEAD
           // 사진이 없을 경우 메시지 표시
           if (_lastImage == null)
             Center(
@@ -328,59 +280,6 @@ class _CameraPageState extends State<CameraPage> with SingleTickerProviderStateM
                     ],
                   ),
                 ),
-=======
-          // 사진이 없을 경우 메시지와 깜빡이는 직사각형 표시
-          if (_lastImage == null)
-            Center(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // 깜빡이는 직사각형
-                  ScaleTransition(
-                    scale: _borderScaleAnimation, // 크기 애니메이션 적용
-                    child: Container(
-                      width: 180, // 텍스트 크기에 맞춘 기본 크기
-                      height: 60,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.7),
-                          width: 3,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  // 텍스트 (사진 글씨는 크게, 굵게, 흰색, 배경은 테마 색상)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: widget.themeColor, // 테마 색상으로 배경 설정
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: RichText(
-                      text: const TextSpan(
-                        children: [
-                          TextSpan(
-                            text: "사진",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 30, // "사진" 글씨 크게
-                              fontWeight: FontWeight.bold, // 굵게
-                            ),
-                          ),
-                          TextSpan(
-                            text: "이 없습니다!",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20, // 나머지 글씨는 기존 크기
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
               ),
             ),
           // 상단 테마 색상 바
@@ -396,19 +295,12 @@ class _CameraPageState extends State<CameraPage> with SingleTickerProviderStateM
           // 이전에 찍은 사진을 상단바 아래부터 촬영 버튼 위까지 표시
           if (_lastImage != null)
             Positioned(
-<<<<<<< HEAD
               top: kBottomNavigationBarHeight + 20,
               // 상단바 아래부터 시작
               left: 20,
               right: 20,
               bottom: 120,
               // 촬영 버튼 위까지 (버튼 높이 + 여백 고려)
-=======
-              top: kBottomNavigationBarHeight + 20, // 상단바 아래부터 시작
-              left: 20,
-              right: 20,
-              bottom: 120, // 촬영 버튼 위까지 (버튼 높이 + 여백 고려)
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
               child: Container(
                 decoration: BoxDecoration(
                   border: Border.all(color: widget.themeColor, width: 2),
@@ -423,26 +315,12 @@ class _CameraPageState extends State<CameraPage> with SingleTickerProviderStateM
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-<<<<<<< HEAD
                   child: AspectRatio(
                     aspectRatio: 3 / 2, // 일반적인 사진 비율 (가로:세로 = 3:2)
                     child: Image.file(
                       _lastImage!,
                       fit: BoxFit.contain, // 비율 유지, 잘리지 않음
                     ),
-=======
-                  child: _imageAspectRatio != null
-                      ? AspectRatio(
-                    aspectRatio: _imageAspectRatio!,
-                    child: Image.file(
-                      _lastImage!,
-                      fit: BoxFit.contain, // 비율 유지
-                    ),
-                  )
-                      : Image.file(
-                    _lastImage!,
-                    fit: BoxFit.contain, // 비율 유지
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
                   ),
                 ),
               ),
@@ -470,12 +348,8 @@ class _CameraPageState extends State<CameraPage> with SingleTickerProviderStateM
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: widget.themeColor,
-<<<<<<< HEAD
                   padding: const EdgeInsets.symmetric(
                       horizontal: 32, vertical: 20),
-=======
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -489,24 +363,7 @@ class _CameraPageState extends State<CameraPage> with SingleTickerProviderStateM
   }
 }
 
-<<<<<<< HEAD
 class CollectionPage extends StatefulWidget {
-=======
-
-
-
-
-
-
-
-
-
-
-
-
-
-class CollectionPage extends StatelessWidget {
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
   final Color themeColor;
   final List<File> images;
   final int previewColumns;
@@ -867,19 +724,13 @@ class GalleryPage extends StatefulWidget {
 class _GalleryPageState extends State<GalleryPage> {
   late int _columns;
   late List<File> _images;
-<<<<<<< HEAD
   Map<String, List<File>> _groupedImages = {}; // 날짜별로 그룹화된 이미지
-=======
-  Map<String, List<File>> _imagesByDate = {}; // 날짜별로 사진 그룹화
-  List<String> _dates = []; // 날짜 태그 리스트
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
 
   @override
   void initState() {
     super.initState();
     _columns = widget.previewColumns;
     _images = widget.images;
-<<<<<<< HEAD
     _groupImagesByDate(); // 날짜별로 그룹화
   }
 
@@ -926,38 +777,6 @@ class _GalleryPageState extends State<GalleryPage> {
     } catch (e) {
       return dateKey;
     }
-=======
-    _groupImagesByDate();
-  }
-
-  void _groupImagesByDate() {
-    _imagesByDate.clear();
-    _dates.clear();
-
-    // 사진을 날짜별로 그룹화
-    for (var image in _images) {
-      // 파일명에서 타임스탬프 추출 (insect_타임스탬프.jpg 형식)
-      final fileName = path.basename(image.path); // 파일명 추출
-      final timestampStr = fileName.replaceAll('insect_', '').replaceAll('.jpg', '');
-      final timestamp = int.tryParse(timestampStr);
-      if (timestamp == null) continue;
-
-      // 타임스탬프를 날짜로 변환 (yyyy-MM-dd 형식)
-      final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-      final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-
-      // 날짜별로 사진 추가
-      if (_imagesByDate.containsKey(dateKey)) {
-        _imagesByDate[dateKey]!.add(image);
-      } else {
-        _imagesByDate[dateKey] = [image];
-        _dates.add(dateKey);
-      }
-    }
-
-    // 날짜 정렬 (최신순)
-    _dates.sort((a, b) => b.compareTo(a));
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
   }
 
   void _changePreviewColumns(int columns) {
@@ -1013,11 +832,7 @@ class _GalleryPageState extends State<GalleryPage> {
               widget.onImageDeleted();
               setState(() {
                 _images.remove(image);
-<<<<<<< HEAD
                 _groupImagesByDate(); // 삭제 후 그룹화 업데이트
-=======
-                _groupImagesByDate(); // 사진 삭제 후 날짜별 그룹 업데이트
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
               });
               Navigator.pop(context);
             },
@@ -1036,7 +851,6 @@ class _GalleryPageState extends State<GalleryPage> {
         children: [
           Container(height: kBottomNavigationBarHeight, color: widget.themeColor),
           Expanded(
-<<<<<<< HEAD
             child: _groupedImages.isEmpty
                 ? const Center(child: Text("사진이 없습니다.", style: TextStyle(fontSize: 18)))
                 : ListView.builder(
@@ -1076,62 +890,6 @@ class _GalleryPageState extends State<GalleryPage> {
                       );
                     },
                   ),
-=======
-            child: _dates.isEmpty
-                ? const Center(child: Text("사진이 없습니다.", style: TextStyle(fontSize: 18)))
-                : ListView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: _dates.length,
-              itemBuilder: (context, index) {
-                final date = _dates[index];
-                final dateImages = _imagesByDate[date]!;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 날짜 헤더
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                      child: Row(
-                        children: [
-                          Text(
-                            date,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Divider(
-                              color: widget.themeColor,
-                              thickness: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // 해당 날짜의 사진들
-                    GridView.builder(
-                      shrinkWrap: true, // ListView 안에서 GridView가 크기를 조정하도록
-                      physics: const NeverScrollableScrollPhysics(), // GridView의 스크롤 비활성화
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: _columns,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 8,
-                      ),
-                      itemCount: dateImages.length,
-                      itemBuilder: (context, index) {
-                        final image = dateImages[index];
-                        return GestureDetector(
-                          onTap: () => _showImageDialog(image),
-                          onLongPress: () => _deleteImage(image),
-                          child: Image.file(image, fit: BoxFit.cover),
-                        );
-                      },
-                    ),
-                  ],
->>>>>>> 2bb36cccfb3c115675cdb7ba79b7e914a0d3d945
                 );
               },
             ),
