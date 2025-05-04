@@ -7,7 +7,7 @@ import 'package:path/path.dart' as path;
 import 'pages/camera_page.dart';
 import 'pages/collection_page.dart';
 import 'pages/search_page.dart';
-import 'pages/settings_page.dart';
+import 'pages/game_page.dart'; // 새로 만든 game_page.dart 경로
 
 void main() {
   runApp(const MyApp());
@@ -123,9 +123,8 @@ class _MainNavigationState extends State<MainNavigation> {
         onImageDeleted: _loadImages,
       ),
       SearchPage(themeColor: _themeColor),
-      SettingsPage(
-        themeColor: _themeColor,
-        onThemeChanged: _saveThemeColor,
+      GamePage(
+        playerCards: [], // 선택된 카드 목록 (초기화 필요 or 선택 페이지와 연동)
       ),
     ];
 
@@ -140,7 +139,7 @@ class _MainNavigationState extends State<MainNavigation> {
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: '촬영'),
           BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: '도감'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: '검색'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
+          BottomNavigationBarItem(icon: Icon(Icons.sports_kabaddi), label: '게임'), // 새 라벨
         ],
       ),
     );
