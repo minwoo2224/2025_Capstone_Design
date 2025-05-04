@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Insect Battle Example</title>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"></script>
+
+    <h1>Insect Battle Roby</h1>
+    <form action="button">
+        <button type="button" onclick="select1()">select character 1</button>
+        <button type="button" onclick="select2()">select character 2</button>
+    </form>
+    <button type="button" onclick="joinQueue()">JOIN</button>
+    <script>
+        const socket = io();
+        let playerData = null;
+        function select1() {
+            playerData = {
+                "id": 1,
+                "name": "minki",
+                "attack": 48,
+                "hp": 100
+            };
+            console.log("set user character1");
+        };
+
+        function select2() {
+            playerData = {
+                "id": 2,
+                "name": "minking",
+                "attack": 50,
+                "hp": 100
+            };
+            console.log("set user character2")
+        }
+
+        function joinQueue() {
+            if (playerData) {
+                console.log("set playerdata");
+            } else {
+                console.log("no set playerdata");
+            }
+            socket.emit("joinQueue", playerData);
+            console.log("user req joinQueue");
+        }
+    </script>
+</body>
+</html>

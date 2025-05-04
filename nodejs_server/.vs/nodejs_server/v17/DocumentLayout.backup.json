@@ -3,6 +3,18 @@
   "WorkspaceRootPath": "C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{A982A098-9C72-4C10-8844-0E24E7736946}|nodejs_server\\nodejs_server.njsproj|C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\client.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{A982A098-9C72-4C10-8844-0E24E7736946}|nodejs_server\\nodejs_server.njsproj|solutionrelative:nodejs_server\\client.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A982A098-9C72-4C10-8844-0E24E7736946}|nodejs_server\\nodejs_server.njsproj|C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\character2.JSON||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{A982A098-9C72-4C10-8844-0E24E7736946}|nodejs_server\\nodejs_server.njsproj|solutionrelative:nodejs_server\\character2.JSON||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A982A098-9C72-4C10-8844-0E24E7736946}|nodejs_server\\nodejs_server.njsproj|C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\character1.JSON||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{A982A098-9C72-4C10-8844-0E24E7736946}|nodejs_server\\nodejs_server.njsproj|solutionrelative:nodejs_server\\character1.JSON||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{A982A098-9C72-4C10-8844-0E24E7736946}|nodejs_server\\nodejs_server.njsproj|C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\server.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
       "RelativeMoniker": "D:0:0:{A982A098-9C72-4C10-8844-0E24E7736946}|nodejs_server\\nodejs_server.njsproj|solutionrelative:nodejs_server\\server.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     }
@@ -14,19 +26,58 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
+              "Title": "character2.JSON",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\character2.JSON",
+              "RelativeDocumentMoniker": "nodejs_server\\character2.JSON",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\character2.JSON",
+              "RelativeToolTip": "nodejs_server\\character2.JSON",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-05-03T03:08:41.68Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "character1.JSON",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\character1.JSON",
+              "RelativeDocumentMoniker": "nodejs_server\\character1.JSON",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\character1.JSON",
+              "RelativeToolTip": "nodejs_server\\character1.JSON",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-05-03T03:03:28.894Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "server.js",
               "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\server.js",
               "RelativeDocumentMoniker": "nodejs_server\\server.js",
-              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\server.js",
-              "RelativeToolTip": "nodejs_server\\server.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\server.js*",
+              "RelativeToolTip": "nodejs_server\\server.js*",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABgAAAADAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
               "WhenOpened": "2025-03-20T10:47:01.933Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "client.html",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\client.html",
+              "RelativeDocumentMoniker": "nodejs_server\\client.html",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\nodejs_server\\nodejs_server\\client.html",
+              "RelativeToolTip": "nodejs_server\\client.html",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-05-01T09:07:56.937Z",
               "EditorCaption": ""
             }
           ]
