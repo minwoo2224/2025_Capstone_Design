@@ -1,0 +1,71 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{D7069BCD-DDEC-453F-B129-320ED4061915}|server.njsproj|C:\\Users\\jomin\\2025_Capstone_Design\\server\\battle.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{D7069BCD-DDEC-453F-B129-320ED4061915}|server.njsproj|solutionrelative:battle.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D7069BCD-DDEC-453F-B129-320ED4061915}|server.njsproj|C:\\Users\\jomin\\2025_Capstone_Design\\server\\index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{D7069BCD-DDEC-453F-B129-320ED4061915}|server.njsproj|solutionrelative:index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D7069BCD-DDEC-453F-B129-320ED4061915}|server.njsproj|C:\\Users\\jomin\\2025_Capstone_Design\\server\\server.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{D7069BCD-DDEC-453F-B129-320ED4061915}|server.njsproj|solutionrelative:server.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "battle.js",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\battle.js",
+              "RelativeDocumentMoniker": "battle.js",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\battle.js",
+              "RelativeToolTip": "battle.js",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACYAAAA3AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-05T13:57:06.4Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "server.js",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\server.js",
+              "RelativeDocumentMoniker": "server.js",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\server.js",
+              "RelativeToolTip": "server.js",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-04T13:46:19.422Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "index.html",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\index.html",
+              "RelativeDocumentMoniker": "index.html",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\index.html",
+              "RelativeToolTip": "index.html",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-05-04T13:51:38.559Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

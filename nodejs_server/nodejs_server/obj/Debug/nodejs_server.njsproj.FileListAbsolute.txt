@@ -1,3 +1,0 @@
-C:\Users\jomin\2025_Capstone_Design\nodejs_server\nodejs_server\obj\Debug\nodejs_server.njsproj.AssemblyReference.cache
-C:\Users\jomin\2025_Capstone_Design\nodejs_server\nodejs_server\obj\Debug\nodejs_server.njsproj.CoreCompileInputs.cache
-C:\Users\jomin\2025_Capstone_Design\nodejs_server\nodejs_server\bin\Microsoft.NodejsTools.WebRole.dll
