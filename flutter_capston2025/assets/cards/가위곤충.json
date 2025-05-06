@@ -1,0 +1,13 @@
+{
+  "name": "가위곤충",
+  "type": "가위",
+  "attack": 20,
+  "defense": 10,
+  "health": 100,
+  "speed": 15,
+  "passive": "속도 +10%",
+  "critical": 0.1,
+  "evasion": 0.1,
+  "order": "좀목",
+  "image": "assets/images/scissors_bug.png"
+}

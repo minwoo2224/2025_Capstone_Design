@@ -1,0 +1,10 @@
+앱 내에서 사용하는 데이터 구조(class, json 변환 등)를 정의하는 폴더
+
+EX)
+	InsectCard		:	곤충 카드의 속성 구조
+	User			:	사용자 정보 구조
+	BattleResult	:	전투 결과 구조 등
+
+AI 모델 자체 파일 (.tflite, .onnx 등) 은 일반적으로 assets/models/ 폴더로
+
+AI 모델의 결과를 처리하는 Dart 클래스는 이 models 폴더에 들어갈 수 있음

@@ -1,0 +1,13 @@
+{
+  "name": "보곤충",
+  "type": "보",
+  "attack": 22,
+  "defense": 12,
+  "health": 110,
+  "speed": 12,
+  "passive": "회피율 +5%",
+  "critical": 0.1,
+  "evasion": 0.1,
+  "order": "나비목",
+  "image": "assets/images/paper_bug.png"
+}

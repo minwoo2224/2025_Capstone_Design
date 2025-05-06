@@ -123,9 +123,7 @@ class _MainNavigationState extends State<MainNavigation> {
         onImageDeleted: _loadImages,
       ),
       SearchPage(themeColor: _themeColor),
-      GamePage(
-        playerCards: [], // 선택된 카드 목록 (초기화 필요 or 선택 페이지와 연동)
-      ),
+      const GamePage(),
     ];
 
     return Scaffold(

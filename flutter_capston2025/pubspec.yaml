@@ -16,6 +16,7 @@ dependencies:
   sticky_headers: ^0.3.0+2 # 날짜별 그룹화를 위해 추가
   intl: ^0.19.0 # 날짜 포맷팅을 위해 추가
   cupertino_icons: ^1.0.8
+  socket_io_client: ^2.0.3 # 서버 통신을 위한 flutter socket io
 
 dev_dependencies:
   flutter_test:
@@ -24,6 +25,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/cards/
+    - assets/images/
+
 
   # assets:
   #   - images/a_dot_burr.jpeg
