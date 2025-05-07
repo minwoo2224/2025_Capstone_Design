@@ -5,7 +5,7 @@ class SocketService {
   static late IO.Socket socket;
 
   static void connect() {
-    socket = IO.io('http://192.168.0.101:8080', IO.OptionBuilder()
+    socket = IO.io('http://192.168.0.101:8080', IO.OptionBuilder() //서버 주소
         .setTransports(['websocket'])
         .disableAutoConnect()
         .build());
@@ -37,5 +37,19 @@ class SocketService {
 
     socket.emit("joinQueue", playerData);
     print("🛰 joinQueue 요청 전송됨");
+  }
+
+  // ✅ 여기에 추가!
+  static void sendSingleCard(InsectCard card) {
+    final cardData = {
+      "name": card.name,
+      "attack": card.attack,
+      "defend": card.defense,
+      "hp": card.health,
+      "speed": card.speed,
+    };
+
+    socket.emit("sendSingleCard", cardData);
+    print("📤 카드 전송됨: $cardData");
   }
 }
