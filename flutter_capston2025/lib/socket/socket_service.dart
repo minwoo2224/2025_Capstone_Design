@@ -5,33 +5,37 @@ class SocketService {
   static late IO.Socket socket;
 
   static void connect() {
-    socket = IO.io('https://temp_url', IO.OptionBuilder() //나중에 서버 url로 변경
-        .setTransports(['websocket']) // websocket 사용
+    socket = IO.io('http://192.168.0.101:8080', IO.OptionBuilder()
+        .setTransports(['websocket'])
+        .disableAutoConnect()
         .build());
 
     socket.connect();
 
-    socket.onConnect((_) {
-      print("✅ 서버 연결됨");
+    socket.onConnect((_) => print("✅ 서버 연결됨"));
+    socket.onDisconnect((_) => print("❌ 연결 끊김"));
+
+    socket.on("updateStatus", (data) {
+      print("🌀 상태 업데이트: ${data['self']} 체력 ${data['selfHp']} / ${data['enemy']} 체력 ${data['enemyHp']}");
     });
 
-    socket.onDisconnect((_) {
-      print("❌ 서버 연결 끊김");
+    socket.on("updateResult", (msg) {
+      print("🏆 결과: $msg");
     });
 
-    socket.onError((data) {
-      print("⚠️ 에러 발생: $data");
-    });
+    socket.onError((data) => print("⚠️ 에러 발생: $data"));
   }
 
-  static void sendSelectedCards(List<InsectCard> cards) {
-    final jsonList = cards.map((card) => card.toJson()).toList();
-    socket.emit("selectedCards", jsonList);
-    print("🛰 선택된 카드 서버에 전송함");
-  }
+  static void joinQueue(InsectCard card) {
+    final playerData = {
+      "name": card.name,
+      "attack": card.attack,
+      "defend": card.defense,
+      "hp": card.health,
+      "speed": card.speed,
+    };
 
-  static void sendSingleCard(InsectCard card) {
-    socket.emit("selectedCard", card.toJson());
-    print("🛰 단일 카드 서버에 전송함");
+    socket.emit("joinQueue", playerData);
+    print("🛰 joinQueue 요청 전송됨");
   }
 }
