@@ -5,7 +5,7 @@ class SocketService {
   static late IO.Socket socket;
 
   static void connect() {
-    socket = IO.io('http://192.168.0.101:8080', IO.OptionBuilder() //서버 주소
+    socket = IO.io('http://43.203.208.60:8080/', IO.OptionBuilder() //서버 주소
         .setTransports(['websocket'])
         .disableAutoConnect()
         .build());

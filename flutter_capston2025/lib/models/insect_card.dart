@@ -28,6 +28,16 @@ class InsectCard {
     required this.order,
     required this.image, // **이미지 추가
   });
+  Map<String, dynamic> toServerJson() {
+    return {
+      'name': name,
+      'type': type,
+      'attack': attack,
+      'defense': defense,
+      'health': health,
+      'speed': speed,
+    };
+  }
 
   factory InsectCard.fromJson(Map<String, dynamic> json) {
     return InsectCard(

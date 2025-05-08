@@ -1,5 +1,7 @@
+
 import 'package:flutter/material.dart';
 import '../models/insect_card.dart';
+import '../socket/socket_service.dart';
 
 class CardSelectionPage extends StatefulWidget {
   const CardSelectionPage({super.key});
@@ -10,7 +12,7 @@ class CardSelectionPage extends StatefulWidget {
 
 class _CardSelectionPageState extends State<CardSelectionPage> {
   List<InsectCard> _cards = [];
-  List<InsectCard> _selected = [];
+  InsectCard? _selected;
 
   @override
   void initState() {
@@ -25,22 +27,23 @@ class _CardSelectionPageState extends State<CardSelectionPage> {
     });
   }
 
-  void _toggleSelect(InsectCard card) {
+  void _selectCard(InsectCard card) {
     setState(() {
-      if (_selected.contains(card)) {
-        _selected.remove(card);
-      } else {
-        if (_selected.length < 3) _selected.add(card);
-      }
+      _selected = card;
     });
   }
 
   void _submitSelection() {
-    if (_selected.length == 3) {
-      Navigator.pop(context, _selected);
+    if (_selected != null) {
+      SocketService.socket.emit("joinQueue", _selected!.toServerJson());
+      print("🛰 선택된 카드 1장 서버에 전송됨");
+
+      Future.microtask(() {
+        Navigator.pop(context, _selected);
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("3장의 카드를 선택하세요")),
+        const SnackBar(content: Text("카드를 1장 선택하세요")),
       );
     }
   }
@@ -54,9 +57,9 @@ class _CardSelectionPageState extends State<CardSelectionPage> {
           : GridView.count(
               crossAxisCount: 2,
               children: _cards.map((card) {
-                final isSelected = _selected.contains(card);
+                final isSelected = _selected == card;
                 return GestureDetector(
-                  onTap: () => _toggleSelect(card),
+                  onTap: () => _selectCard(card),
                   child: Card(
                     color: isSelected ? Colors.green[100] : null,
                     margin: const EdgeInsets.all(8),
@@ -66,7 +69,7 @@ class _CardSelectionPageState extends State<CardSelectionPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Image.asset(card.image, width: 60, height: 60),
-                          const SizedBox(height: 4), //**이미지 추가
+                          const SizedBox(height: 4),
                           Text(card.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                           Text("타입: ${card.type}, 목: ${card.order}"),
                           Text("공: ${card.attack}, 방: ${card.defense}"),
