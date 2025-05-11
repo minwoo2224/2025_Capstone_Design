@@ -32,7 +32,7 @@ class _CollectionPageState extends State<CollectionPage> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            double iconSize = constraints.maxWidth * 0.12;
+            double iconSize = constraints.maxWidth * 0.15; // ⬆️ 모든 곤충 크기 증가
             return Stack(
               children: [
                 ..._buildInsectImages(iconSize),
@@ -80,11 +80,18 @@ class _CollectionPageState extends State<CollectionPage> {
 
   List<Widget> _buildInsectImages(double size) {
     const positions = [
-      Alignment.topLeft, Alignment.topCenter, Alignment.topRight,
-      Alignment.centerLeft, Alignment.centerRight,
-      Alignment.bottomLeft, Alignment.bottomCenter, Alignment.bottomRight,
-      Alignment(-0.7, -0.3), Alignment(0.7, -0.3),
-      Alignment(-0.6, 0.6), Alignment(0.6, 0.6),
+      Alignment(-1.0, -0.85), // ⬇️ 1번: 아래로
+      Alignment(0.0, -0.85),  // ⬇️ 2번: 아래로
+      Alignment(1.0, -0.85),  // ⬇️ 3번: 아래로
+      Alignment.centerLeft,
+      Alignment.centerRight,
+      Alignment.bottomLeft,
+      Alignment.bottomCenter,
+      Alignment.bottomRight,
+      Alignment(-0.7, -0.4), // ⬆️ 9번: 위로
+      Alignment(0.7, -0.4),  // ⬆️ 10번: 위로
+      Alignment(-0.6, 0.6),
+      Alignment(0.6, 0.6),
     ];
     return List.generate(12, (i) {
       return Align(
