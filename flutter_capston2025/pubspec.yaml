@@ -30,6 +30,9 @@ flutter:
   assets:
     - assets/cards/
     - assets/images/
+    - assets/title/
+    - assets/title/rhinoceros_beetle.png
+    - assets/title/mantis.png
     - assets/images/insect1.png
     - assets/images/insect2.png
     - assets/images/insect3.png

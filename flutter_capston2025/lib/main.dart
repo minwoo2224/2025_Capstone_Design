@@ -10,6 +10,7 @@ import 'pages/collection_page.dart';
 import 'pages/search_page.dart';
 import 'pages/game_page.dart';
 import 'theme/game_theme.dart';
+import 'pages/title_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,7 +24,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: '곤충 도감 앱',
       theme: buildGameTheme(),
-      home: const MainNavigation(),
+      home: const TitleScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
