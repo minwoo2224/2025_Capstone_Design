@@ -30,6 +30,7 @@
   <ItemGroup>
     <Content Include="battle.js" />
     <Content Include="index.html" />
+    <Content Include="playerdata.json" />
     <Content Include="server.js" />
     <Content Include="package.json" />
     <Content Include="README.md" />

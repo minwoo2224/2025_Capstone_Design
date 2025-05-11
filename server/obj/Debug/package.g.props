@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <PackageJsonName Condition="$(PackageJsonName) == ''">server</PackageJsonName>
+    <PackageJsonVersion Condition="$(PackageJsonVersion) == ''">0.0.0</PackageJsonVersion>
+    <PackageJsonDescription Condition="$(PackageJsonDescription) == ''">server</PackageJsonDescription>
+    <PackageJsonMain Condition="$(PackageJsonMain) == ''">server.js</PackageJsonMain>
+    <PackageJsonAuthorName Condition="$(PackageJsonAuthorName) == ''"></PackageJsonAuthorName>
+    <PackageJsonDevdependenciesEslint Condition="$(PackageJsonDevdependenciesEslint) == ''">^8.21.0</PackageJsonDevdependenciesEslint>
+    <PackageJsonDependenciesExpress Condition="$(PackageJsonDependenciesExpress) == ''">^5.1.0</PackageJsonDependenciesExpress>
+    <PackageJsonDependenciesSocketIo Condition="$(PackageJsonDependenciesSocketIo) == ''">^4.8.1</PackageJsonDependenciesSocketIo>
+  </PropertyGroup>
+</Project>

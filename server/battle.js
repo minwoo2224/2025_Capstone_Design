@@ -1,4 +1,4 @@
-function battle(player1, player2) {
+async function battle(player1, player2, callback) {
     console.log("battle start")
     const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
@@ -12,42 +12,64 @@ function battle(player1, player2) {
         attacker = player2;
         defender = player1;
     }
+    attacker.socket.emit("initialStatus", {
+        enemy: defender.name,
+        enemyatk: defender.attack,
+        enemyhp: defender.hp,
+        enemydf: defender.defend,
+        enemyspd: defender.speed
+    });
 
-    (async function loop() {
-        while (true) {
-            // 공격 계산
-            const damage = Math.max(0, attacker.attack - defender.defend);
-            defender.hp -= damage;
+    defender.socket.emit("initialStatus", {
+        enemy: attacker.name,
+        enemyatk: attacker.attack,
+        enemyhp: attacker.hp,
+        enemydf: attacker.defend,
+        enemyspd: attacker.speed
+    });
+    
+    while (true) {
+        if (!attacker.socket.connected || !defender.socket.connected) {
+            break;
+        }
+        // 공격 계산
+        const damage = Math.max(0, attacker.attack - defender.defend);
+        defender.hp -= damage;
 
-            // 상태 전송 (각 플레이어에게 서로의 상태 전달)
-            attacker.socket.emit("updateStatus", {
-                self: attacker.name,
-                enemy: defender.name,
-                selfHp: attacker.hp,
-                enemyHp: defender.hp
-            });
+        // 상태 전송 (각 플레이어에게 서로의 상태 전달)
+        attacker.socket.emit("updateStatus", {
+            self: attacker.name,
+            enemy: defender.name,
+            selfHp: attacker.hp,
+            enemyHp: defender.hp
+        });
 
-            defender.socket.emit("updateStatus", {
-                self: defender.name,
-                enemy: attacker.name,
-                selfHp: defender.hp,
-                enemyHp: attacker.hp
-            });
+        defender.socket.emit("updateStatus", {
+            self: defender.name,
+            enemy: attacker.name,
+            selfHp: defender.hp,
+            enemyHp: attacker.hp
+        });
 
-            // 종료 조건
-            if (defender.hp <= 0) {
-                const resultMsg = `${attacker.name} win!`;
-                attacker.socket.emit("updateResult", resultMsg);
-                defender.socket.emit("updateResult", resultMsg);
-                console.log("battle end")
-                break;
+        // 종료 조건
+        if (defender.hp <= 0) {
+            const resultMsg = `${attacker.name} round win!`;
+            attacker.socket.emit("updateResult", resultMsg);
+            defender.socket.emit("updateResult", resultMsg);
+
+            const winnerSocketId = attacker.socket.id;
+            if (callback && typeof callback === 'function') {
+                callback(winnerSocketId);
             }
 
-            // 턴 교체
-            [attacker, defender] = [defender, attacker];
-            await delay(1000);
+            console.log("round end")
+            break;
         }
-    })();
-}
+
+        // 턴 교체
+        [attacker, defender] = [defender, attacker];
+        await delay(1000);
+    }
+} 
 
 module.exports = { battle };

@@ -1,0 +1,21 @@
+{
+    "playername": "string",
+    "character": [
+        {
+            "number": "int",
+            "name": "string",
+            "hp": "string",
+            "attack": "int",
+            "defend": "int",
+            "speed": "int",
+            "socket": "socket",
+        }
+    ]
+     
+    "name": "data.name",
+    "hp": "data.hp",
+    "attack": "data.attack",
+    "defend": "data.defend",
+    "speed": "data.speed",
+    "socket": "socket"
+}

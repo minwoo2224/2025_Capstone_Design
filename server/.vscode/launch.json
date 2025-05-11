@@ -1,0 +1,44 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "localhost (Edge)",
+            "type": "edge",
+            "request": "launch",
+            "url": "http://localhost:1337",
+            "webRoot": "${workspaceFolder}/"
+        },
+        {
+            "name": "localhost (Chrome)",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}/"
+        },
+        {
+            "name": "Debug node process",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/server.js",
+            "skipFiles": [
+                "<node_internals/**>"
+            ],
+            "stopOnEntry": false, // 코드 중단을 방지하기 위해 false로 설정
+            "console": "externalTerminal",
+            "env": {
+                "port": "8080"
+            },
+            "args": []
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch Node and Browser",
+            "configurations": [
+                "Debug node process", // Node.js 실행
+                "localhost (Chrome)" // Chrome 실행
+            ]
+        }
+    ]
+}
