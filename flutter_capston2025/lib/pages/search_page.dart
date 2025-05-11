@@ -50,7 +50,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("검색")),
+      appBar: AppBar(title: const Text("Search")),
       body: Column(
         children: [
           Container(height: kBottomNavigationBarHeight, color: widget.themeColor),
@@ -92,7 +92,7 @@ class _SearchPageState extends State<SearchPage> {
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text("${_filteredInsects[index]} 선택됨"),
+                          content: Text("${_filteredInsects[index]} selected"),
                         ),
                       );
                     },

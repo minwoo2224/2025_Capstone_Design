@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
@@ -7,7 +8,8 @@ import 'package:path/path.dart' as path;
 import 'pages/camera_page.dart';
 import 'pages/collection_page.dart';
 import 'pages/search_page.dart';
-import 'pages/game_page.dart'; // 새로 만든 game_page.dart 경로
+import 'pages/game_page.dart';
+import 'theme/game_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,10 +22,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '곤충 도감 앱',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        scaffoldBackgroundColor: Colors.white,
-      ),
+      theme: buildGameTheme(),
       home: const MainNavigation(),
       debugShowCheckedModeBanner: false,
     );
@@ -70,7 +69,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   Future<void> _loadImages() async {
     final dir = await getApplicationDocumentsDirectory();
-    final photoDir = Directory('${dir.path}/insect_photos');
+    final photoDir = Directory('\${dir.path}/insect_photos');
     if (await photoDir.exists()) {
       final files = photoDir
           .listSync()
@@ -103,7 +102,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 });
                 Navigator.pop(context);
               },
-              child: Text('$num개 보기'),
+              child: Text('\$num개 보기'),
             );
           }).toList(),
         ),
@@ -123,7 +122,7 @@ class _MainNavigationState extends State<MainNavigation> {
         onImageDeleted: _loadImages,
       ),
       SearchPage(themeColor: _themeColor),
-      const GamePage(),
+      GamePage(themeColor: _themeColor), // 수정됨!
     ];
 
     return Scaffold(
@@ -137,7 +136,7 @@ class _MainNavigationState extends State<MainNavigation> {
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: '촬영'),
           BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: '도감'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: '검색'),
-          BottomNavigationBarItem(icon: Icon(Icons.sports_kabaddi), label: '게임'), // 새 라벨
+          BottomNavigationBarItem(icon: Icon(Icons.sports_kabaddi), label: '게임'),
         ],
       ),
     );

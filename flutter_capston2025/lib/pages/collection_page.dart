@@ -1,11 +1,12 @@
-import 'dart:io'; // Add this import to use the File class
+
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'gallery_page.dart';
 import 'dictionary_page.dart';
 
 class CollectionPage extends StatefulWidget {
   final Color themeColor;
-  final List<File> images; // Now File is recognized
+  final List<File> images;
   final int previewColumns;
   final VoidCallback onPreviewSetting;
   final VoidCallback onImageDeleted;
@@ -24,132 +25,110 @@ class CollectionPage extends StatefulWidget {
 }
 
 class _CollectionPageState extends State<CollectionPage> {
-  Color _getComplementaryColor(Color color) {
-    return Color.fromRGBO(
-      255 - color.red,
-      255 - color.green,
-      255 - color.blue,
-      1.0,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final complementaryColor = _getComplementaryColor(widget.themeColor);
-
     return Scaffold(
-      body: Column(
-        children: [
-          Container(height: kBottomNavigationBarHeight, color: widget.themeColor),
-          Expanded(
-            child: Column(
+      backgroundColor: const Color.fromARGB(255, 59, 36, 173),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            double iconSize = constraints.maxWidth * 0.12;
+            return Stack(
               children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DictionaryPage()),
-                    ),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            complementaryColor,
-                            complementaryColor.withOpacity(0.7),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                ..._buildInsectImages(iconSize),
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildButton(
+                        label: "도감",
+                        icon: Icons.menu_book,
+                        color: Colors.amber.shade400,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const DictionaryPage()),
                         ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: complementaryColor.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
                       ),
-                      child: const Center(
-                        child: Text(
-                          "도감",
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black26,
-                                blurRadius: 5,
-                                offset: Offset(2, 2),
-                              ),
-                            ],
+                      const SizedBox(height: 24),
+                      _buildButton(
+                        label: "갤러리",
+                        icon: Icons.photo_library,
+                        color: Colors.cyanAccent.shade400,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => GalleryPage(
+                              themeColor: widget.themeColor,
+                              images: widget.images,
+                              previewColumns: widget.previewColumns,
+                              onPreviewSetting: widget.onPreviewSetting,
+                              onImageDeleted: widget.onImageDeleted,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => GalleryPage(
-                          themeColor: widget.themeColor,
-                          images: widget.images,
-                          previewColumns: widget.previewColumns,
-                          onPreviewSetting: widget.onPreviewSetting,
-                          onImageDeleted: widget.onImageDeleted,
-                        ),
-                      ),
-                    ),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            complementaryColor.withOpacity(0.7),
-                            complementaryColor.withOpacity(0.4),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: complementaryColor.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "갤러리",
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black26,
-                                blurRadius: 5,
-                                offset: Offset(2, 2),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
                 ),
               ],
-            ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildInsectImages(double size) {
+    const positions = [
+      Alignment.topLeft, Alignment.topCenter, Alignment.topRight,
+      Alignment.centerLeft, Alignment.centerRight,
+      Alignment.bottomLeft, Alignment.bottomCenter, Alignment.bottomRight,
+      Alignment(-0.7, -0.3), Alignment(0.7, -0.3),
+      Alignment(-0.6, 0.6), Alignment(0.6, 0.6),
+    ];
+    return List.generate(12, (i) {
+      return Align(
+        alignment: positions[i],
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset(
+            'assets/images/insect${i + 1}.png',
+            width: size,
+            height: size,
           ),
-        ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: 240,
+      height: 70,
+      child: ElevatedButton.icon(
+        icon: Icon(icon, size: 28, color: Colors.black),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: const BorderSide(color: Colors.black, width: 2),
+          ),
+          elevation: 6,
+        ),
       ),
     );
   }

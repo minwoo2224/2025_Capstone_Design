@@ -17,6 +17,7 @@ dependencies:
   intl: ^0.19.0 # 날짜 포맷팅을 위해 추가
   cupertino_icons: ^1.0.8
   socket_io_client: ^2.0.3 # 서버 통신을 위한 flutter socket io
+  google_fonts: ^5.0.0 #레트로 느낌나는 폰트
 
 dev_dependencies:
   flutter_test:
@@ -29,6 +30,12 @@ flutter:
   assets:
     - assets/cards/
     - assets/images/
+    - assets/images/insect1.png
+    - assets/images/insect2.png
+    - assets/images/insect3.png
+    - assets/images/insect4.png
+    - assets/images/insect5.png
+    - assets/images/insect6.png
 
 
   # assets:
