@@ -75,7 +75,7 @@ class _CameraPageState extends State<CameraPage> {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("assets/images/space_bg.png"),
+                image: AssetImage("assets/images/camera_page/space_bg.png"),
                 fit: BoxFit.cover,
               ),
             ),

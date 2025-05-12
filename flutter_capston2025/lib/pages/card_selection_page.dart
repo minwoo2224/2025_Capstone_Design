@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../models/insect_card.dart';
 import '../socket/socket_service.dart';

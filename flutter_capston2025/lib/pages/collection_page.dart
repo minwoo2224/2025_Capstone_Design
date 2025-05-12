@@ -99,7 +99,7 @@ class _CollectionPageState extends State<CollectionPage> {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Image.asset(
-            'assets/images/insect${i + 1}.png',
+            'assets/images/collection_page/insect${i + 1}.png',
             width: size,
             height: size,
           ),
