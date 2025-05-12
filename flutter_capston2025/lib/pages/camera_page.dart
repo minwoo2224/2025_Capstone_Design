@@ -8,7 +8,12 @@ import 'package:path/path.dart' as path;
 class CameraPage extends StatefulWidget {
   final Color themeColor;
   final VoidCallback onPhotoTaken;
-  const CameraPage({super.key, required this.themeColor, required this.onPhotoTaken});
+
+  const CameraPage({
+    super.key,
+    required this.themeColor,
+    required this.onPhotoTaken,
+  });
 
   @override
   State<CameraPage> createState() => _CameraPageState();
@@ -16,13 +21,6 @@ class CameraPage extends StatefulWidget {
 
 class _CameraPageState extends State<CameraPage> {
   File? _lastImage;
-
-  Color _getLighterThemeColor(Color themeColor) {
-    if (themeColor is MaterialColor) {
-      return themeColor.shade100;
-    }
-    return themeColor.withOpacity(0.3);
-  }
 
   @override
   void initState() {
@@ -48,11 +46,6 @@ class _CameraPageState extends State<CameraPage> {
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   Future<void> _takePhoto() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
@@ -73,124 +66,103 @@ class _CameraPageState extends State<CameraPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: Stack(
         children: [
+          // 🪐 우주 배경
           Container(
             decoration: BoxDecoration(
-              image: _lastImage != null
-                  ? DecorationImage(
-                image: FileImage(_lastImage!),
+              image: DecorationImage(
+                image: AssetImage("assets/images/space_bg.png"),
                 fit: BoxFit.cover,
-              )
-                  : null,
-              color: _lastImage == null ? _getLighterThemeColor(widget.themeColor) : null,
-            ),
-            child: _lastImage != null
-                ? BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: Container(
-                color: Colors.black.withOpacity(0.2),
-              ),
-            )
-                : null,
-          ),
-          if (_lastImage == null)
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: widget.themeColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: RichText(
-                  text: const TextSpan(
-                    children: [
-                      TextSpan(
-                        text: "사진",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextSpan(
-                        text: "이 없습니다!",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: kBottomNavigationBarHeight,
-              color: widget.themeColor,
-            ),
           ),
+
+          // 📸 최근 촬영 이미지
           if (_lastImage != null)
             Positioned(
-              top: kBottomNavigationBarHeight + 20,
-              left: 20,
-              right: 20,
-              bottom: 120,
+              top: 100,
+              left: 30,
+              right: 30,
               child: Container(
+                height: screenHeight * 0.65, // 화면의 65%만 사용
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  border: Border.all(color: widget.themeColor, width: 2),
-                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: widget.themeColor, width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 5,
-                      offset: const Offset(0, 3),
+                      color: Colors.black26,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: AspectRatio(
-                    aspectRatio: 3 / 2,
-                    child: Image.file(
-                      _lastImage!,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
+                  borderRadius: BorderRadius.circular(15),
+                  child: Image.file(_lastImage!, fit: BoxFit.cover),
                 ),
               ),
+            )
+          else
+            Align(
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ⬇️ 안내 아이콘
+                  Image.asset("assets/icons/camera_guide.png", height: 100),
+                  const SizedBox(height: 12),
+                  Text(
+                    '사진이 없습니다!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      shadows: [
+                        Shadow(color: Colors.black45, offset: Offset(1, 1), blurRadius: 2),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
+
+          // 🚀 촬영하기 버튼
           Positioned(
-            bottom: 20,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: ElevatedButton.icon(
-                onPressed: _takePhoto,
-                icon: const Icon(
-                  Icons.camera_alt,
-                  size: 40,
-                  color: Colors.white,
+            bottom: 40,
+            left: 30,
+            right: 30,
+            child: GestureDetector(
+              onTap: _takePhoto,
+              child: Container(
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.redAccent,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black26, blurRadius: 5, offset: Offset(2, 4)),
+                  ],
                 ),
-                label: const Text(
-                  '촬영',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: widget.themeColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.camera_alt, color: Colors.white, size: 30),
+                    SizedBox(width: 12),
+                    Text(
+                      '촬영하기 🚀',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

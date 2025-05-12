@@ -36,6 +36,8 @@ flutter:
     - assets/images/insect4.png
     - assets/images/insect5.png
     - assets/images/insect6.png
+    - assets/images/space_bg.png
+    - assets/icons/camera_guide.png
 
 
   # assets:
