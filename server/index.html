@@ -101,6 +101,9 @@
         socket.on("matchResult", (msg) => {
             alert(`matchReuslt: ${msg}`);
         });
+        socket.on("cardsInfo", (cardsdata) => {
+            console.log(cardsdata);
+        });
     </script>
 </body>
 </html>

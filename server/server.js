@@ -25,7 +25,7 @@ io.on("connection", (socket) => {
         players[socket.id] = {
             name: playerData.name,
             socket: socket,
-            cards: playerData.cards,                 //three card information
+            cards: playerData.cards,   //three card information
             selectedIndex: undefined,  //select one card
             roomId: null,
             wins: 0                    //wins point = 2 -> game win
@@ -42,6 +42,13 @@ io.on("connection", (socket) => {
                 players[id].socket.join(roomId);
             });
             io.to(roomId).emit("matched", "matching success! select card!");
+
+            //send three cards info
+            const roomPlayers = Object.values(players).filter(p => p.roomId === roomId);
+            const [p1, p2] = roomPlayers;
+            p1.socket.emit("cardsInfo", p2.cards);
+            p2.socket.emit("cardsInfo", p1.cards);
+
             console.log(io.sockets.adapter.rooms);
         };
     });
@@ -68,6 +75,7 @@ io.on("connection", (socket) => {
                 players[winnerSocketId].wins += 1;
 
                 if (players[winnerSocketId].wins === 2) {
+
                     io.to(roomId).emit("matchResult", players[winnerSocketId].name + "wins!");
                     console.log(`${roomId} game end`);
                 } else {
