@@ -69,7 +69,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   Future<void> _loadImages() async {
     final dir = await getApplicationDocumentsDirectory();
-    final photoDir = Directory('\${dir.path}/insect_photos');
+    final photoDir = Directory('${dir.path}/insect_photos');
     if (await photoDir.exists()) {
       final files = photoDir
           .listSync()
