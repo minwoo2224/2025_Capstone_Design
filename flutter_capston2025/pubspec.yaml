@@ -39,6 +39,33 @@ flutter:
     - assets/images/insect4.png
     - assets/images/insect5.png
     - assets/images/insect6.png
+    - assets/images/camera_page/
+    - assets/images/collection_page/
+    - assets/images/family_detail_page/
+    - assets/images/cards/
+    - assets/images/collection_page/insect1.png
+    - assets/images/collection_page/insect2.png
+    - assets/images/collection_page/insect3.png
+    - assets/images/collection_page/insect4.png
+    - assets/images/collection_page/insect5.png
+    - assets/images/collection_page/insect6.png
+    - assets/images/camera_page/space_bg.png
+    - assets/images/family_detail_page/나비/
+    - assets/images/family_detail_page/딱정벌레/
+    - assets/images/family_detail_page/벌/
+    - assets/images/family_detail_page/나비/호랑나비과/
+    - assets/images/family_detail_page/나비/흰나비과/
+    - assets/images/family_detail_page/딱정벌레/사슴벌레과/
+    - assets/images/family_detail_page/딱정벌레/풍뎅이과/
+    - assets/images/family_detail_page/벌/꿀벌과/
+    - assets/images/family_detail_page/벌/말벌과/
+    - assets/images/family_detail_page/나비/호랑나비과/호랑나비1.jpg
+    - assets/images/family_detail_page/나비/흰나비과/흰나비1.jpg
+    - assets/images/family_detail_page/딱정벌레/사슴벌레과/사슴벌레1.jpg
+    - assets/images/family_detail_page/딱정벌레/풍뎅이과/풍뎅이1.jpg
+    - assets/images/family_detail_page/벌/꿀벌과/꿀벌1.jpg
+    - assets/images/family_detail_page/벌/말벌과/말벌1.jpg
+    - assets/icons/camera_guide.png
 
 
   # assets:
