@@ -43,9 +43,12 @@ class _TitleScreenState extends State<TitleScreen> with TickerProviderStateMixin
       duration: const Duration(milliseconds: 1000),
     );
     _mantisOffset = Tween<Offset>(
-      begin: const Offset(-1.5, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _mantisController, curve: Curves.easeOut));
+      begin: const Offset(-1.5, 1.5), // 화면 바깥 왼쪽 아래
+      end: Offset.zero,               // Align 기준의 위치로 이동
+    ).animate(CurvedAnimation(
+      parent: _mantisController,
+      curve: Curves.easeOut,
+    ));
 
     // 3. 타이틀 (뿅)
     _titleController = AnimationController(
@@ -115,6 +118,21 @@ class _TitleScreenState extends State<TitleScreen> with TickerProviderStateMixin
           // 배경색
           Container(color: Colors.white),
 
+          // 사마귀 (왼쪽에서 들어옴)
+          SlideTransition(
+            position: _mantisOffset,
+            child: Align(
+              alignment: Alignment.bottomLeft, // 끝 위치를 bottomLeft로 고정
+              child: Padding(
+                padding: const EdgeInsets.only(left: 20, bottom: 20), // 약간 여백 조정
+                child: Image.asset(
+                  'assets/title/mantis.png',
+                  width: 200,
+                ),
+              ),
+            ),
+          ),
+
           // 장수풍뎅이 (아래에서 올라옴)
           SlideTransition(
             position: _beetleOffset,
@@ -123,21 +141,6 @@ class _TitleScreenState extends State<TitleScreen> with TickerProviderStateMixin
               child: Image.asset(
                 'assets/title/rhinoceros_beetle.png',
                 width: 250,
-              ),
-            ),
-          ),
-
-          // 사마귀 (왼쪽에서 들어옴)
-          SlideTransition(
-            position: _mantisOffset,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 20),
-                child: Image.asset(
-                  'assets/title/mantis.png',
-                  width: 200,
-                ),
               ),
             ),
           ),
