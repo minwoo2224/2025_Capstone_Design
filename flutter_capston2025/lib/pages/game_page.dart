@@ -59,10 +59,60 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     playerHealth = player.health;
     opponentHealth = opponent.health;
 
+    _initAnimations();
+    Future.delayed(const Duration(seconds: 1), startBattle);
+  }
+
+  void _initAnimations() {
     _attackController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
+
+    _hitController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _attackAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _attackController, curve: Curves.easeOut));
+
+    _hitAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(-0.1, 0),
+    ).animate(CurvedAnimation(parent: _hitController, curve: Curves.elasticIn));
+  }
+
+  @override
+  void dispose() {
+    _attackController.dispose();
+    _hitController.dispose();
+    super.dispose();
+  }
+
+  void startBattle() async {
+    while (!battleEnded) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      await performAttack();
+    }
+  }
+
+  Future<void> performAttack() async {
+    if (battleEnded) return;
+
+    InsectCard attacker = playerTurn ? player : opponent;
+    InsectCard defender = playerTurn ? opponent : player;
+
+    bool evaded = Random().nextDouble() < defender.evasion;
+    bool critical = Random().nextDouble() < attacker.critical;
+
+    double typeMultiplier = getTypeMultiplier(attacker.type, defender.type);
+    int baseDamage = max(0, attacker.attack - defender.defense);
+    double totalDamage = baseDamage * typeMultiplier * (critical ? 1.5 : 1);
+    damageAmount = totalDamage.round();
+
     _attackAnimation = TweenSequence<Offset>([
       TweenSequenceItem(
         tween: Tween(
@@ -87,53 +137,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       ),
     ]).animate(CurvedAnimation(parent: _attackController, curve: Curves.easeOut));
 
-    _hitController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-    _hitAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(-0.1, 0),
-    ).animate(CurvedAnimation(parent: _hitController, curve: Curves.elasticIn));
-
-    Future.delayed(const Duration(seconds: 1), startBattle);
-  }
-
-  @override
-  void dispose() {
-    _attackController.dispose();
-    _hitController.dispose();
-    super.dispose();
-  }
-
-  void startBattle() async {
-    while (!battleEnded) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      await performAttack();
-    }
-  }
-
-  Future<void> performAttack() async {
-    if (battleEnded) return;
-    InsectCard attacker = playerTurn ? player : opponent;
-    InsectCard defender = playerTurn ? opponent : player;
-
-    bool evaded = Random().nextDouble() < defender.evasion;
-    bool critical = Random().nextDouble() < attacker.critical;
-
-    double typeMultiplier = getTypeMultiplier(attacker.type, defender.type);
-    int baseDamage = max(0, attacker.attack - defender.defense);
-    double totalDamage = baseDamage * typeMultiplier * (critical ? 1.5 : 1);
-    damageAmount = totalDamage.round();
-
     _attackController.forward(from: 0);
-    if (!evaded) {
-      _hitController.forward(from: 0);
-    }
+    if (!evaded) _hitController.forward(from: 0);
 
-    setState(() {
-      showDamage = true;
-    });
+    setState(() => showDamage = true);
 
     await Future.delayed(const Duration(milliseconds: 600));
 
@@ -147,22 +154,17 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         } else {
           playerHealth = max(0, playerHealth - damageAmount);
         }
-        battleLog = '${attacker.name}의 공격! ${critical ? "치명타! " : ""}${damageAmount}의 피해를 입혔습니다';
+        battleLog = '${attacker.name}의 공격! ${critical ? "치명타! " : ""}$damageAmount의 피해를 입혔습니다';
       }
-    });
 
-    if (playerHealth <= 0 || opponentHealth <= 0) {
-      setState(() {
+      if (playerHealth <= 0 || opponentHealth <= 0) {
         battleEnded = true;
         battleLog = playerHealth <= 0
             ? '${opponent.name}의 승리!'
             : '${player.name}의 승리!';
-      });
-      return;
-    }
-
-    setState(() {
-      playerTurn = !playerTurn;
+      } else {
+        playerTurn = !playerTurn;
+      }
     });
   }
 
@@ -221,7 +223,15 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       ),
       body: Stack(
         children: [
-          // 상대 곤충 위치
+          // ✅ 배경 이미지 추가
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background/forest_background.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+
+          // 기존 상대 곤충 UI
           Positioned(
             top: 50,
             right: 16,
@@ -242,11 +252,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                           left: -70,
                           child: Text(
                             '-$damageAmount',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: const TextStyle(fontSize: 24, color: Colors.red, fontWeight: FontWeight.bold),
                           ),
                         ),
                     ],
@@ -255,7 +261,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
               ],
             ),
           ),
-          // 내 곤충 위치
+
+          // 플레이어 곤충 UI
           Positioned(
             bottom: 100,
             left: 16,
@@ -274,11 +281,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                           right: -70,
                           child: Text(
                             '-$damageAmount',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: const TextStyle(fontSize: 24, color: Colors.red, fontWeight: FontWeight.bold),
                           ),
                         ),
                     ],
@@ -289,6 +292,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
               ],
             ),
           ),
+
           // 전투 로그
           Positioned(
             bottom: 16,
