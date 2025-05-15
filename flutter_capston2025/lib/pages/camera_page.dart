@@ -8,31 +8,36 @@ import 'dart:convert';
 import 'dart:math';
 
 Future<void> _saveInsectData(String fileName) async {
-  final dir = await getApplicationDocumentsDirectory();
-  final photoDir = Directory('${dir.path}/insect_photos');
-  final dataFile = File('${photoDir.path}/${fileName.replaceAll(".jpg", ".json")}');
+  try {
+    final dir = await getApplicationDocumentsDirectory();
+    final photoDir = Directory('${dir.path}/insect_photos');
+    final dataFile = File('${photoDir.path}/${fileName.replaceAll(".jpg", ".json")}');
 
-  final random = Random();
+    final random = Random();
+    final types = ["묵", "찌", "빠"];
+    final String randomType = types[random.nextInt(types.length)];
 
-  final types = ["묵", "찌", "빠"];
-  final String randomType = types[random.nextInt(types.length)];
+    final insectData = {
+      "name": "insect",
+      "type": randomType,
+      "attack": random.nextInt(51) + 30,
+      "defense": random.nextInt(51) + 30,
+      "health": random.nextInt(51) + 50,
+      "speed": random.nextInt(31) + 20,
+      "passive": null,
+      "critical": (random.nextDouble() * 0.3).toStringAsFixed(2),
+      "evasion": (random.nextDouble() * 0.25).toStringAsFixed(2),
+      "order": "Anyorder",
+      "image": fileName,
+    };
 
-  final insectData = {
-    "name": "insect",
-    "type": randomType,
-    "attack": random.nextInt(51) + 30,    // 30~80
-    "defense": random.nextInt(51) + 30,   // 30~80
-    "health": random.nextInt(51) + 50,    // 50~100
-    "speed": random.nextInt(31) + 20,     // 20~50
-    "passive": null,
-    "critical": (random.nextDouble() * 0.3).toStringAsFixed(2),
-    "evasion": (random.nextDouble() * 0.25).toStringAsFixed(2),
-    "order": "Anyorder",
-    "image": fileName,
-  };
-
-  await dataFile.writeAsString(jsonEncode(insectData));
+    await dataFile.writeAsString(jsonEncode(insectData));
+    print('JSON 저장 경로: ${dataFile.path}');
+  } catch (e) {
+    print('곤충 JSON 저장 실패: $e');
+  }
 }
+
 
 class CameraPage extends StatefulWidget {
   final Color themeColor;
