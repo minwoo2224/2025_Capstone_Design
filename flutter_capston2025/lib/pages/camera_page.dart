@@ -1,9 +1,12 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+
+import 'Login/login_page.dart';
+import 'Login/settings_page.dart';
+
 
 class CameraPage extends StatefulWidget {
   final Color themeColor;
@@ -56,7 +59,8 @@ class _CameraPageState extends State<CameraPage> {
         await photoDir.create(recursive: true);
       }
       final fileName = 'insect_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final newFile = await File(pickedFile.path).copy('${photoDir.path}/$fileName');
+      final newFile =
+      await File(pickedFile.path).copy('${photoDir.path}/$fileName');
       setState(() {
         _lastImage = newFile;
       });
@@ -71,7 +75,6 @@ class _CameraPageState extends State<CameraPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // 🪐 우주 배경
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
@@ -81,14 +84,13 @@ class _CameraPageState extends State<CameraPage> {
             ),
           ),
 
-          // 📸 최근 촬영 이미지
           if (_lastImage != null)
             Positioned(
               top: 100,
               left: 30,
               right: 30,
               child: Container(
-                height: screenHeight * 0.65, // 화면의 65%만 사용
+                height: screenHeight * 0.65,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.9),
@@ -114,7 +116,6 @@ class _CameraPageState extends State<CameraPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ⬇️ 안내 아이콘
                   Image.asset("assets/icons/camera_guide.png", height: 100),
                   const SizedBox(height: 12),
                   Text(
@@ -132,7 +133,6 @@ class _CameraPageState extends State<CameraPage> {
               ),
             ),
 
-          // 🚀 촬영하기 버튼
           Positioned(
             bottom: 40,
             left: 30,
@@ -165,6 +165,36 @@ class _CameraPageState extends State<CameraPage> {
                   ],
                 ),
               ),
+            ),
+          ),
+
+          Positioned(
+            top: 40,
+            right: 20,
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const LoginPage(),
+                    ));
+                  },
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white,
+                    child: Text('👤', style: TextStyle(fontSize: 20)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.settings, color: Colors.white, size: 36),
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const SettingsPage(),
+                    ));
+                  },
+                ),
+              ],
             ),
           ),
         ],

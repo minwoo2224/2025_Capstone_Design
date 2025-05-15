@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.10.1
   image_picker: ^1.1.2
   path_provider: ^2.1.5
   shared_preferences: ^2.3.0 # 테마 색상 저장을 위해 추가

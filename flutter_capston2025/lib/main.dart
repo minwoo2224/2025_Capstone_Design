@@ -1,7 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
@@ -10,9 +10,14 @@ import 'pages/collection_page.dart';
 import 'pages/search_page.dart';
 import 'pages/game_page.dart';
 import 'theme/game_theme.dart';
+import 'firebase/firebase_options.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const MyApp()); // MainApp → MyApp
 }
 
 class MyApp extends StatelessWidget {
@@ -102,7 +107,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 });
                 Navigator.pop(context);
               },
-              child: Text('\$num개 보기'),
+              child: Text('$num개 보기'),
             );
           }).toList(),
         ),
@@ -122,7 +127,7 @@ class _MainNavigationState extends State<MainNavigation> {
         onImageDeleted: _loadImages,
       ),
       SearchPage(themeColor: _themeColor),
-      GamePage(themeColor: _themeColor), // 수정됨!
+      GamePage(themeColor: _themeColor),
     ];
 
     return Scaffold(
