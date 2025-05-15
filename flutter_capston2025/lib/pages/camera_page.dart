@@ -4,6 +4,35 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'dart:convert';
+import 'dart:math';
+
+Future<void> _saveInsectData(String fileName) async {
+  final dir = await getApplicationDocumentsDirectory();
+  final photoDir = Directory('${dir.path}/insect_photos');
+  final dataFile = File('${photoDir.path}/${fileName.replaceAll(".jpg", ".json")}');
+
+  final random = Random();
+
+  final types = ["묵", "찌", "빠"];
+  final String randomType = types[random.nextInt(types.length)];
+
+  final insectData = {
+    "name": "insect",
+    "type": randomType,
+    "attack": random.nextInt(51) + 30,    // 30~80
+    "defense": random.nextInt(51) + 30,   // 30~80
+    "health": random.nextInt(51) + 50,    // 50~100
+    "speed": random.nextInt(31) + 20,     // 20~50
+    "passive": null,
+    "critical": (random.nextDouble() * 0.3).toStringAsFixed(2),
+    "evasion": (random.nextDouble() * 0.25).toStringAsFixed(2),
+    "order": "Anyorder",
+    "image": fileName,
+  };
+
+  await dataFile.writeAsString(jsonEncode(insectData));
+}
 
 class CameraPage extends StatefulWidget {
   final Color themeColor;
@@ -57,6 +86,7 @@ class _CameraPageState extends State<CameraPage> {
       }
       final fileName = 'insect_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final newFile = await File(pickedFile.path).copy('${photoDir.path}/$fileName');
+      await _saveInsectData(fileName); // JSON 자동 저장
       setState(() {
         _lastImage = newFile;
       });

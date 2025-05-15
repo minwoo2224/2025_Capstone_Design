@@ -8,7 +8,8 @@ plugins {
 android {
     namespace = "com.example.flutter_capston2025"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    //ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973" //이거 없으면 이민우 폰에서 빌드가 안됨
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
