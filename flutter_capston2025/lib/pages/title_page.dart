@@ -123,12 +123,9 @@ class _TitleScreenState extends State<TitleScreen> with TickerProviderStateMixin
             position: _mantisOffset,
             child: Align(
               alignment: Alignment.bottomLeft, // 끝 위치를 bottomLeft로 고정
-              child: Padding(
-                padding: const EdgeInsets.only(left: 20, bottom: 20), // 약간 여백 조정
-                child: Image.asset(
-                  'assets/title/mantis.png',
-                  width: 200,
-                ),
+              child: Image.asset(
+                'assets/title/mantis.png',
+                width: 240,
               ),
             ),
           ),
@@ -137,10 +134,10 @@ class _TitleScreenState extends State<TitleScreen> with TickerProviderStateMixin
           SlideTransition(
             position: _beetleOffset,
             child: Align(
-              alignment: Alignment.bottomCenter,
+              alignment: Alignment.bottomRight,
               child: Image.asset(
                 'assets/title/rhinoceros_beetle.png',
-                width: 250,
+                width: 350,
               ),
             ),
           ),
@@ -150,7 +147,7 @@ class _TitleScreenState extends State<TitleScreen> with TickerProviderStateMixin
             child: ScaleTransition(
               scale: _titleScale,
               child: const Text(
-                '세계 최강 곤충 배틀',
+                '곤충 탐험대',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,

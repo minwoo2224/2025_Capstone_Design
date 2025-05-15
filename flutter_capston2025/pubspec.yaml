@@ -12,6 +12,8 @@ dependencies:
     sdk: flutter
   image_picker: ^1.1.2
   path_provider: ^2.1.5
+
+
   shared_preferences: ^2.3.0 # 테마 색상 저장을 위해 추가
   sticky_headers: ^0.3.0+2 # 날짜별 그룹화를 위해 추가
   intl: ^0.19.0 # 날짜 포맷팅을 위해 추가
