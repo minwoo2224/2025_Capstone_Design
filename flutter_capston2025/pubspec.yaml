@@ -10,6 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.10.1
+  cloud_firestore: ^4.9.3
   image_picker: ^1.1.2
   path_provider: ^2.1.5
 
@@ -46,6 +49,7 @@ flutter:
     - assets/images/collection_page/insect5.png
     - assets/images/collection_page/insect6.png
     - assets/images/camera_page/space_bg.png
+    - assets/images/background/forest_background.png
     - assets/images/family_detail_page/나비/
     - assets/images/family_detail_page/딱정벌레/
     - assets/images/family_detail_page/벌/

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "964812499160",
+    "project_id": "cbnu-aed65",
+    "storage_bucket": "cbnu-aed65.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:964812499160:android:e6884de08030b882ed4fad",
+        "android_client_info": {
+          "package_name": "com.example.flutter_capston2025"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnCCYqHhS8QH0iD16txRcXp_5n4B3hJ_A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:964812499160:android:ce12a8cbe371a5e6ed4fad",
+        "android_client_info": {
+          "package_name": "com.insect.cbnu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnCCYqHhS8QH0iD16txRcXp_5n4B3hJ_A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

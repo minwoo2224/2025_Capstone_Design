@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'dart:convert';
 import 'dart:math';
+import 'Login/login_page.dart';
+import 'Login/settings_page.dart';
 
 Future<void> _saveInsectData(String fileName) async {
   try {
@@ -37,7 +39,6 @@ Future<void> _saveInsectData(String fileName) async {
     print('곤충 JSON 저장 실패: $e');
   }
 }
-
 
 class CameraPage extends StatefulWidget {
   final Color themeColor;
@@ -200,6 +201,36 @@ class _CameraPageState extends State<CameraPage> {
                   ],
                 ),
               ),
+            ),
+          ),
+
+          Positioned(
+            top: 40,
+            right: 20,
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const LoginPage(),
+                    ));
+                  },
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white,
+                    child: Text('👤', style: TextStyle(fontSize: 20)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.settings, color: Colors.white, size: 36),
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const SettingsPage(),
+                    ));
+                  },
+                ),
+              ],
             ),
           ),
         ],

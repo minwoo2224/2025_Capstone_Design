@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/insect_card.dart';
 import '../socket/socket_service.dart';
 import 'camera_page.dart';
+import 'game_page.dart';
+
 
 class CardSelectionPage extends StatefulWidget {
   final Color themeColor;
@@ -57,15 +59,28 @@ class _CardSelectionPageState extends State<CardSelectionPage> {
 
   void _submitSelection() {
     if (_selected != null) {
-      SocketService.socket.emit("joinQueue", _selected!.toServerJson());
-      print("🛰 선택된 카드 1장 서버에 전송됨");
-      _navigateToCameraPage();
+      // 상대 카드 랜덤 선택
+      final unselectedCards = _cards.where((card) => card != _selected).toList();
+      final randomOpponent = (unselectedCards..shuffle()).first;
+
+      // GamePage로 이동
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => GamePage(
+            playerCard: _selected!,
+            opponentCard: randomOpponent,
+            themeColor: widget.themeColor,
+          ),
+        ),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("카드를 1장 선택해주세요")),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -105,10 +120,14 @@ class _CardSelectionPageState extends State<CardSelectionPage> {
                         children: [
                           Image.asset(card.image, width: 60, height: 60),
                           const SizedBox(height: 6),
-                          Text(card.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                          Text("타입: ${card.type}, 목: ${card.order}", style: const TextStyle(fontSize: 10, color: Colors.white70)),
-                          Text("공: ${card.attack}, 방: ${card.defense}", style: const TextStyle(fontSize: 10, color: Colors.white70)),
-                          Text("체: ${card.health}, 속: ${card.speed}", style: const TextStyle(fontSize: 10, color: Colors.white70)),
+                          Text(card.name, style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.white,
+                          )),
+                          Text("타입: ${card.type}, 목: ${card.order}", style: const TextStyle(fontSize: 13, color: Colors.white70)),
+                          Text("공: ${card.attack}, 방: ${card.defense}", style: const TextStyle(fontSize: 13, color: Colors.white70)),
+                          Text("체: ${card.health}, 속: ${card.speed}", style: const TextStyle(fontSize: 13, color: Colors.white70)),
                         ],
                       ),
                     ),

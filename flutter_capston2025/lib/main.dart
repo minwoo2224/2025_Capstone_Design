@@ -11,8 +11,13 @@ import 'pages/search_page.dart';
 import 'pages/game_page.dart';
 import 'theme/game_theme.dart';
 import 'pages/title_page.dart';
+import 'firebase/firebase_options.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -70,7 +75,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   Future<void> _loadImages() async {
     final dir = await getApplicationDocumentsDirectory();
-    final photoDir = Directory('\${dir.path}/insect_photos');
+    final photoDir = Directory('${dir.path}/insect_photos');
     if (await photoDir.exists()) {
       final files = photoDir
           .listSync()
@@ -103,7 +108,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 });
                 Navigator.pop(context);
               },
-              child: Text('\$num개 보기'),
+              child: Text('$num개 보기'),
             );
           }).toList(),
         ),
