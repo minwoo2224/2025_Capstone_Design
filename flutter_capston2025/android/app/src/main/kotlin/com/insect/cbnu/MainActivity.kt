@@ -1,4 +1,4 @@
-package com.example.flutter_capston2025
+package com.insect.cbnu
 
 import io.flutter.embedding.android.FlutterActivity
 
