@@ -4,10 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 
-import 'Login/login_page.dart';
-import 'Login/settings_page.dart';
-
-
 class CameraPage extends StatefulWidget {
   final Color themeColor;
   final VoidCallback onPhotoTaken;
@@ -83,7 +79,6 @@ class _CameraPageState extends State<CameraPage> {
               ),
             ),
           ),
-
           if (_lastImage != null)
             Positioned(
               top: 100,
@@ -167,36 +162,7 @@ class _CameraPageState extends State<CameraPage> {
               ),
             ),
           ),
-
-          Positioned(
-            top: 40,
-            right: 20,
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => const LoginPage(),
-                    ));
-                  },
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.white,
-                    child: Text('👤', style: TextStyle(fontSize: 20)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: Icon(Icons.settings, color: Colors.white, size: 36),
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => const SettingsPage(),
-                    ));
-                  },
-                ),
-              ],
-            ),
-          ),
+          // 상단에 아무 버튼도 없음
         ],
       ),
     );

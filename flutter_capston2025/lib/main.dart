@@ -1,48 +1,56 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'dart:io';
 import 'package:path/path.dart' as path;
 
 import 'pages/camera_page.dart';
 import 'pages/collection_page.dart';
 import 'pages/search_page.dart';
 import 'pages/game_page.dart';
+import 'pages/login_page.dart';
+import 'pages/user_setting_page.dart';
 import 'theme/game_theme.dart';
 import 'firebase/firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MyApp());
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  final prefs = await SharedPreferences.getInstance();
+  final savedUid = prefs.getString('uid');
+  runApp(MyApp(isLoggedIn: savedUid != null));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isLoggedIn;
+
+  const MyApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '곤충 도감 앱',
       theme: buildGameTheme(),
-      home: const MainNavigation(),
       debugShowCheckedModeBanner: false,
+      home: isLoggedIn
+          ? const MainNavigation(selectedIndex: 0)
+          : const LoginPage(),
     );
   }
 }
 
 class MainNavigation extends StatefulWidget {
-  const MainNavigation({super.key});
+  final int selectedIndex;
+  const MainNavigation({super.key, this.selectedIndex = 0});
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
   Color _themeColor = Colors.deepPurple;
   List<File> _images = [];
   int _previewColumns = 2;
@@ -50,6 +58,7 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.selectedIndex;
     _loadImages();
     _loadThemeColor();
   }
@@ -115,8 +124,25 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 
+  // 로그아웃 시 LoginPage로 이동
+  void _onLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('uid');
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LoginPage(),
+      ),
+          (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     final pages = [
       CameraPage(themeColor: _themeColor, onPhotoTaken: _loadImages),
       CollectionPage(
@@ -128,6 +154,11 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       SearchPage(themeColor: _themeColor),
       GamePage(themeColor: _themeColor),
+      UserSettingPage(
+        email: user?.email ?? '알 수 없음',
+        themeColor: _themeColor,
+        onLogout: _onLogout,
+      ),
     ];
 
     return Scaffold(
@@ -136,12 +167,14 @@ class _MainNavigationState extends State<MainNavigation> {
         currentIndex: _selectedIndex,
         selectedItemColor: _themeColor,
         unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: '촬영'),
           BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: '도감'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: '검색'),
           BottomNavigationBarItem(icon: Icon(Icons.sports_kabaddi), label: '게임'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
         ],
       ),
     );
