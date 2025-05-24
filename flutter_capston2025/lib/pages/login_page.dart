@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_capston2025/pigeon/auth_bridge.dart';
 import '../main_navigation.dart';
@@ -51,22 +52,15 @@ class _LoginPageState extends State<LoginPage> {
         }
 
         await _sendUserToNative(credential.user!);
+        await _syncUserToFirestoreAndLocal(credential.user!);
 
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('uid', credential.user!.uid);
-
-        setState(() {
-          message = '로그인 성공! ${credential.user!.email}';
-          isSuccess = true;
-        });
-
-        // ★★★ 여기가 중요 ★★★
-        Navigator.pushReplacement(
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (_) => const MainNavigation(selectedIndex: 4),
-          ),
+          MaterialPageRoute(builder: (_) => const MainNavigation(selectedIndex: 4)),
+              (route) => false,
         );
+
       } else {
         credential = await auth.createUserWithEmailAndPassword(
           email: email,
@@ -75,6 +69,7 @@ class _LoginPageState extends State<LoginPage> {
 
         await credential.user!.sendEmailVerification();
         await _sendUserToNative(credential.user!);
+        await _syncUserToFirestoreAndLocal(credential.user!);
 
         setState(() {
           message = '회원가입 성공! 이메일 인증을 완료해주세요.';
@@ -91,6 +86,64 @@ class _LoginPageState extends State<LoginPage> {
         message = '예외 발생: $e';
         isSuccess = false;
       });
+    }
+  }
+
+  Future<void> handleGuestLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('uid', 'guest_uid');
+    await prefs.setString('email', 'guest@example.com');
+    await prefs.setString('joinDate', DateTime.now().toString().split(' ')[0]);
+    await prefs.setInt('insectCount', 0);
+    await prefs.setString('userNumber', '000000');
+    await prefs.setString('documentId', 'guest_local');
+
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const MainNavigation(selectedIndex: 4)),
+          (route) => false,
+    );
+  }
+
+  Future<void> _syncUserToFirestoreAndLocal(User user) async {
+    final usersRef = FirebaseFirestore.instance.collection('users');
+    final prefs = await SharedPreferences.getInstance();
+
+    try {
+      final querySnapshot = await usersRef.where('email', isEqualTo: user.email).get();
+      DocumentSnapshot userDoc;
+
+      if (querySnapshot.docs.isEmpty) {
+        final allUsers = await usersRef.get();
+        final userNumber = allUsers.docs.length + 1;
+        final userNumberStr = userNumber.toString().padLeft(6, '0');
+
+        final userMap = {
+          'uid': user.uid,
+          'email': user.email,
+          'joinDate': (user.metadata.creationTime ?? DateTime.now()).toIso8601String(),
+          'insectCount': 0,
+          'userNumber': userNumberStr,
+        };
+
+        final docRef = await usersRef.add(userMap);
+        userDoc = await docRef.get();
+        await prefs.setString('documentId', docRef.id);
+      } else {
+        userDoc = querySnapshot.docs.first;
+        await prefs.setString('documentId', userDoc.id);
+      }
+
+      final userData = userDoc.data() as Map<String, dynamic>;
+      await prefs.setString('uid', userData['uid']);
+      await prefs.setString('email', userData['email']);
+      await prefs.setString('joinDate', userData['joinDate']);
+      await prefs.setInt('insectCount', userData['insectCount']);
+      await prefs.setString('userNumber', userData['userNumber']);
+    } catch (e) {
+      print('Firestore 처리 실패: $e');
     }
   }
 
@@ -189,6 +242,16 @@ class _LoginPageState extends State<LoginPage> {
               child: Text(
                 isLogin ? '계정이 없으신가요? 회원가입' : '계정이 있으신가요? 로그인',
                 style: const TextStyle(color: Colors.white60),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Divider(color: Colors.white24),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: handleGuestLogin,
+              child: const Text(
+                '게스트로 계속하기',
+                style: TextStyle(color: Colors.grey, fontSize: 15),
               ),
             ),
             const SizedBox(height: 20),

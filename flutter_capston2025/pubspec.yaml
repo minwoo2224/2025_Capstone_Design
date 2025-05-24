@@ -39,6 +39,7 @@ flutter:
     - assets/images/collection_page/
     - assets/images/family_detail_page/
     - assets/images/cards/
+    - assets/images/BugStrike_user_images.png
     - assets/images/collection_page/insect1.png
     - assets/images/collection_page/insect2.png
     - assets/images/collection_page/insect3.png
