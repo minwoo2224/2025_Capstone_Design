@@ -1,21 +1,23 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
-
+import 'storage/login_storage.dart'; // 위에서 정의한 txt 저장/삭제 함수
 import 'pages/camera_page.dart';
 import 'pages/collection_page.dart';
 import 'pages/search_page.dart';
 import 'pages/game_page.dart';
-import 'pages/user_setting_page.dart';
 import 'pages/login_page.dart';
+import 'pages/user_setting_page.dart';
 
 class MainNavigation extends StatefulWidget {
   final int selectedIndex;
-  const MainNavigation({super.key, this.selectedIndex = 0});
+  final bool isGuest;
+
+  const MainNavigation({
+    super.key,
+    this.selectedIndex = 0,
+    this.isGuest = false,
+  });
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
@@ -23,70 +25,37 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   late int _selectedIndex;
+  late bool _isGuest;
+  Map<String, String> _loginInfo = {};
   Color _themeColor = Colors.deepPurple;
-  List<File> _images = [];
-  int _previewColumns = 2;
-  Map<String, dynamic>? _guestUserData;
+  int _insectCount = 0;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.selectedIndex;
-    _loadImages();
-    _loadThemeColor();
-    _loadGuestDataIfNeeded();
+    _isGuest = widget.isGuest;
+    _loadLoginInfo();
   }
 
-  Future<void> _loadImages() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final photoDir = Directory('${dir.path}/insect_photos');
-    if (await photoDir.exists()) {
-      final files = photoDir
-          .listSync()
-          .whereType<File>()
-          .where((file) => path.basename(file.path).contains("insect_"))
-          .toList();
-      setState(() {
-        _images = files;
-      });
+  Future<void> _loadLoginInfo() async {
+    Map<String, String> info = {};
+    if (_isGuest) {
+      info = await readLoginInfo(guest: true);
+    } else {
+      info = await readLoginInfo(guest: false);
     }
-  }
-
-  Future<void> _loadThemeColor() async {
-    final prefs = await SharedPreferences.getInstance();
-    final colorValue = prefs.getInt('themeColor');
-    if (colorValue != null) {
-      setState(() {
-        _themeColor = Color(colorValue);
-      });
-    }
-  }
-
-  Future<void> _loadGuestDataIfNeeded() async {
-    final prefs = await SharedPreferences.getInstance();
-    final email = prefs.getString('email');
-    if (email == 'guest@example.com') {
-      setState(() {
-        _guestUserData = {
-          'uid': prefs.getString('uid') ?? 'guest_uid',
-          'email': email,
-          'joinDate': prefs.getString('joinDate') ?? '',
-          'insectCount': prefs.getInt('insectCount') ?? 0,
-          'userNumber': prefs.getString('userNumber') ?? '000000',
-        };
-      });
-    }
+    setState(() {
+      _loginInfo = info;
+    });
   }
 
   Future<void> _onLogout() async {
-    await FirebaseAuth.instance.signOut();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    setState(() {
-      _guestUserData = null;
-      _selectedIndex = 4;
-    });
-    // 로그아웃 후 LoginPage로 이동
+    if (_isGuest) {
+      await clearLoginInfo(guest: true);
+    } else {
+      await clearLoginInfo(guest: false);
+    }
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
@@ -101,71 +70,29 @@ class _MainNavigationState extends State<MainNavigation> {
     });
   }
 
-  Future<Map<String, dynamic>?> _fetchUserProfile(String uid) async {
-    try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      if (doc.exists) return doc.data();
-    } catch (e) {
-      print('유저 데이터 로드 실패: $e');
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    // 로딩 중에는 로딩표시
+    if (_loginInfo.isEmpty) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     final List<Widget> pages = [
-      CameraPage(themeColor: _themeColor, onPhotoTaken: _loadImages),
-      CollectionPage(
-        themeColor: _themeColor,
-        images: _images,
-        previewColumns: _previewColumns,
-        onPreviewSetting: () => setState(() {}),
-        onImageDeleted: _loadImages,
-      ),
+      CameraPage(themeColor: _themeColor, onPhotoTaken: () {}),
+      CollectionPage(themeColor: _themeColor, images: const [], previewColumns: 2, onPreviewSetting: () {}, onImageDeleted: () {}),
       SearchPage(themeColor: _themeColor),
       GamePage(themeColor: _themeColor),
-      (user == null && _guestUserData == null)
-          ? const LoginPage()
-          : (user != null)
-          ? FutureBuilder<Map<String, dynamic>?>(
-        future: _fetchUserProfile(user.uid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final userData = snapshot.data;
-          final String userUid = userData?['uid'] ?? user.uid;
-          final String createDate = userData?['joinDate'] ??
-              (user.metadata.creationTime != null
-                  ? "${user.metadata.creationTime!.year}년 ${user.metadata.creationTime!.month}월 ${user.metadata.creationTime!.day}일"
-                  : '알 수 없음');
-          final String email = user.email ?? '알 수 없음';
-          final int insectCount = userData?['insectCount'] ?? 0;
-
-          return UserSettingPage(
-            email: email,
-            userUid: userUid,
-            createDate: createDate,
-            themeColor: _themeColor,
-            insectCount: insectCount,
-            onLogout: _onLogout,
-            userData: userData,
-            refreshUserData: () async => setState(() {}),
-          );
-        },
-      )
-          : UserSettingPage(
-        email: _guestUserData!['email'],
-        userUid: _guestUserData!['uid'],
-        createDate: _guestUserData!['joinDate'],
+      UserSettingPage(
+        email: _loginInfo['email'] ?? '알 수 없음',
+        userUid: _loginInfo['uid'] ?? '알 수 없음',
+        createDate: _loginInfo['loginDate']?.split('T').first ?? '알 수 없음',
+        insectCount: _insectCount,
         themeColor: _themeColor,
-        insectCount: _guestUserData!['insectCount'],
         onLogout: _onLogout,
-        userData: _guestUserData,
-        refreshUserData: _loadGuestDataIfNeeded,
+        userData: _loginInfo,
+        refreshUserData: _loadLoginInfo,
       ),
     ];
 

@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_capston2025/pigeon/auth_bridge.dart';
 import '../main_navigation.dart';
+import '../storage/login_storage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -51,25 +48,38 @@ class _LoginPageState extends State<LoginPage> {
           return;
         }
 
-        await _sendUserToNative(credential.user!);
-        await _syncUserToFirestoreAndLocal(credential.user!);
+        // 회원 로그인 성공 시 user_login.txt 저장, guest_login.txt 삭제
+        await saveLoginInfo({
+          'email': credential.user!.email ?? '',
+          'uid': credential.user!.uid,
+          'loginDate': DateTime.now().toIso8601String(),
+        }, guest: false);
+        await clearLoginInfo(guest: true);
 
         if (!mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const MainNavigation(selectedIndex: 4)),
+          MaterialPageRoute(
+            builder: (_) => MainNavigation(
+              isGuest: false,
+              selectedIndex: 4,
+            ),
+          ),
               (route) => false,
         );
-
       } else {
         credential = await auth.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
-
         await credential.user!.sendEmailVerification();
-        await _sendUserToNative(credential.user!);
-        await _syncUserToFirestoreAndLocal(credential.user!);
+
+        await saveLoginInfo({
+          'email': credential.user!.email ?? '',
+          'uid': credential.user!.uid,
+          'loginDate': DateTime.now().toIso8601String(),
+        }, guest: false);
+        await clearLoginInfo(guest: true);
 
         setState(() {
           message = '회원가입 성공! 이메일 인증을 완료해주세요.';
@@ -90,75 +100,24 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> handleGuestLogin() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.setString('uid', 'guest_uid');
-    await prefs.setString('email', 'guest@example.com');
-    await prefs.setString('joinDate', DateTime.now().toString().split(' ')[0]);
-    await prefs.setInt('insectCount', 0);
-    await prefs.setString('userNumber', '000000');
-    await prefs.setString('documentId', 'guest_local');
+    await saveLoginInfo({
+      'email': 'guest@example.com',
+      'uid': 'guest_uid',
+      'loginDate': DateTime.now().toIso8601String(),
+    }, guest: true);
+    await clearLoginInfo(guest: false);
 
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const MainNavigation(selectedIndex: 4)),
+      MaterialPageRoute(
+        builder: (_) => MainNavigation(
+          isGuest: true,
+          selectedIndex: 4,
+        ),
+      ),
           (route) => false,
     );
-  }
-
-  Future<void> _syncUserToFirestoreAndLocal(User user) async {
-    final usersRef = FirebaseFirestore.instance.collection('users');
-    final prefs = await SharedPreferences.getInstance();
-
-    try {
-      final querySnapshot = await usersRef.where('email', isEqualTo: user.email).get();
-      DocumentSnapshot userDoc;
-
-      if (querySnapshot.docs.isEmpty) {
-        final allUsers = await usersRef.get();
-        final userNumber = allUsers.docs.length + 1;
-        final userNumberStr = userNumber.toString().padLeft(6, '0');
-
-        final userMap = {
-          'uid': user.uid,
-          'email': user.email,
-          'joinDate': (user.metadata.creationTime ?? DateTime.now()).toIso8601String(),
-          'insectCount': 0,
-          'userNumber': userNumberStr,
-        };
-
-        final docRef = await usersRef.add(userMap);
-        userDoc = await docRef.get();
-        await prefs.setString('documentId', docRef.id);
-      } else {
-        userDoc = querySnapshot.docs.first;
-        await prefs.setString('documentId', userDoc.id);
-      }
-
-      final userData = userDoc.data() as Map<String, dynamic>;
-      await prefs.setString('uid', userData['uid']);
-      await prefs.setString('email', userData['email']);
-      await prefs.setString('joinDate', userData['joinDate']);
-      await prefs.setInt('insectCount', userData['insectCount']);
-      await prefs.setString('userNumber', userData['userNumber']);
-    } catch (e) {
-      print('Firestore 처리 실패: $e');
-    }
-  }
-
-  Future<void> _sendUserToNative(User user) async {
-    final details = PigeonUserDetails()
-      ..uid = user.uid
-      ..email = user.email
-      ..displayName = user.displayName;
-
-    try {
-      final api = AuthBridge();
-      await api.sendUserDetails(details);
-    } catch (e) {
-      print('Native 전달 실패: $e');
-    }
   }
 
   String getErrorMessage(String code) {
@@ -210,8 +169,12 @@ class _LoginPageState extends State<LoginPage> {
               decoration: const InputDecoration(
                 labelText: '이메일',
                 labelStyle: TextStyle(color: Colors.white70),
-                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white30),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
               ),
               keyboardType: TextInputType.emailAddress,
             ),
@@ -223,8 +186,12 @@ class _LoginPageState extends State<LoginPage> {
               decoration: const InputDecoration(
                 labelText: '비밀번호',
                 labelStyle: TextStyle(color: Colors.white70),
-                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white30),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
               ),
             ),
             const SizedBox(height: 30),

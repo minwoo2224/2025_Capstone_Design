@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'login_page.dart';
 
 class UserSettingPage extends StatelessWidget {
   final String email;
@@ -8,8 +8,6 @@ class UserSettingPage extends StatelessWidget {
   final int insectCount;
   final Color themeColor;
   final VoidCallback onLogout;
-  final String masterImageAsset;
-
   final Map<String, dynamic>? userData;
   final VoidCallback? refreshUserData;
 
@@ -21,13 +19,24 @@ class UserSettingPage extends StatelessWidget {
     required this.insectCount,
     required this.themeColor,
     required this.onLogout,
-    this.masterImageAsset = 'assets/images/BugStrike_user_images.png',
     this.userData,
     this.refreshUserData,
   });
 
   @override
   Widget build(BuildContext context) {
+    // 알 수 없음 상태면 자동으로 로그인 페이지로 강제 이동
+    if (email == '알 수 없음' || userUid == '알 수 없음') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+              (route) => false,
+        );
+      });
+      return const SizedBox();
+    }
+
     final isGuest = email.toLowerCase() == 'guest@example.com';
 
     return Scaffold(
@@ -37,63 +46,69 @@ class UserSettingPage extends StatelessWidget {
         backgroundColor: themeColor,
         centerTitle: true,
       ),
-      body: Center(
-        child: Column(
-          children: [
-            const SizedBox(height: 30),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.4,
-              child: Image.asset(
-                masterImageAsset,
-                fit: BoxFit.contain,
-              ),
-            ),
-            if (isGuest) ...[
-              const SizedBox(height: 8),
-              const Text(
-                "비회원입니다.",
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              children: [
+                const SizedBox(height: 30),
+                // 캐릭터 이미지 (크기 복원, 위쪽 margin 조정)
+                SizedBox(
+                  height: 340, // 고정값 또는 MediaQuery로 더 크게 할 수도 있음
+                  child: Image.asset(
+                    'assets/images/BugStrike_user_images.png',
+                    fit: BoxFit.contain,
+                  ),
                 ),
-              ),
-            ],
-            const SizedBox(height: 10),
-            Card(
-              color: Colors.white12,
-              margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _infoRow("이메일", email),
-                    const SizedBox(height: 10),
-                    _infoRow("고유 UID", userUid),
-                    const SizedBox(height: 10),
-                    _infoRow("계정 생성일", createDate),
-                    const SizedBox(height: 10),
-                    _infoRow("잡은 곤충 개수", "$insectCount개"),
-                  ],
+                if (isGuest) ...[
+                  const SizedBox(height: 8),
+                  const Text(
+                    "비회원입니다.",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                Card(
+                  color: Colors.white12,
+                  margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _infoRow("이메일", email),
+                        const SizedBox(height: 10),
+                        _infoRow("고유 UID", userUid),
+                        const SizedBox(height: 10),
+                        _infoRow("계정 생성일", createDate.contains('T') ? createDate.split('T')[0] : createDate),
+                        const SizedBox(height: 10),
+                        _infoRow("잡은 곤충 개수", "$insectCount개"),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const Spacer(),
-            Center(
-              child: ElevatedButton(
-                onPressed: onLogout,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                const SizedBox(height: 30),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: onLogout,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('로그아웃', style: TextStyle(fontSize: 16)),
+                  ),
                 ),
-                child: const Text('로그아웃', style: TextStyle(fontSize: 16)),
-              ),
+                const SizedBox(height: 36),
+              ],
             ),
-            const SizedBox(height: 36),
-          ],
+          ),
         ),
       ),
     );

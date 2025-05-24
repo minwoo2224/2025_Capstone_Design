@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // 🔥 Firestore import
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:path/path.dart' as path;
 
 import 'pages/camera_page.dart';
@@ -15,31 +15,53 @@ import 'pages/login_page.dart';
 import 'pages/user_setting_page.dart';
 import 'theme/game_theme.dart';
 import 'firebase/firebase_options.dart';
+import 'storage/login_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  final prefs = await SharedPreferences.getInstance();
-  final email = prefs.getString('email');
-  final isGuest = email == 'guest@example.com';
-  final isLoggedIn = isGuest || FirebaseAuth.instance.currentUser != null;
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
-  runApp(MyApp(isLoggedIn: isLoggedIn));
+  final guestInfo = await readLoginInfo(guest: true);
+  final userInfo = await readLoginInfo(guest: false);
+
+  bool isGuest = guestInfo.isNotEmpty;
+  bool isLoggedIn = userInfo.isNotEmpty;
+
+  runApp(MyApp(
+    isGuest: isGuest,
+    isLoggedIn: isLoggedIn,
+    guestInfo: guestInfo,
+    userInfo: userInfo,
+  ));
 }
 
 class MyApp extends StatelessWidget {
+  final bool isGuest;
   final bool isLoggedIn;
-  const MyApp({super.key, required this.isLoggedIn});
+  final Map<String, String> guestInfo;
+  final Map<String, String> userInfo;
+
+  const MyApp({
+    super.key,
+    required this.isGuest,
+    required this.isLoggedIn,
+    required this.guestInfo,
+    required this.userInfo,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '곤충 도감 앱',
-      theme: buildGameTheme(),
+      theme: ThemeData.dark(),
       debugShowCheckedModeBanner: false,
-      home: isLoggedIn
-          ? const MainNavigation(selectedIndex: 4)
+      home: isGuest
+          ? MainNavigation(isGuest: true, selectedIndex: 4, loginInfo: guestInfo)
+          : isLoggedIn
+          ? MainNavigation(isGuest: false, selectedIndex: 4, loginInfo: userInfo)
           : const LoginPage(),
     );
   }
@@ -47,7 +69,15 @@ class MyApp extends StatelessWidget {
 
 class MainNavigation extends StatefulWidget {
   final int selectedIndex;
-  const MainNavigation({super.key, this.selectedIndex = 0});
+  final bool isGuest;
+  final Map<String, String>? loginInfo;
+
+  const MainNavigation({
+    super.key,
+    this.selectedIndex = 0,
+    this.isGuest = false,
+    this.loginInfo,
+  });
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
@@ -55,17 +85,19 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   late int _selectedIndex;
+  late bool _isGuest;
+  late Map<String, String> _loginInfo;
   Color _themeColor = Colors.deepPurple;
   List<File> _images = [];
   int _previewColumns = 2;
-
-  // Firestore 유저 데이터용 변수
   Map<String, dynamic>? _userData;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.selectedIndex;
+    _isGuest = widget.isGuest;
+    _loginInfo = widget.loginInfo ?? {};
     _loadImages();
     _loadThemeColor();
     _loadUserData();
@@ -134,6 +166,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   /// 🔥 Firestore에서 유저 정보 불러오기
   Future<void> _loadUserData() async {
+    if (_isGuest) return;
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
@@ -145,24 +178,44 @@ class _MainNavigationState extends State<MainNavigation> {
     }
   }
 
-  // 로그아웃 시 LoginPage로 이동
+  // 로그아웃
   void _onLogout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('uid');
-    await FirebaseAuth.instance.signOut();
-    if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const LoginPage(),
-      ),
-          (route) => false,
-    );
+    if (_isGuest) {
+      // 게스트 로그아웃: txt를 남기고 그냥 로그인 페이지로 이동
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+            (route) => false,
+      );
+    } else {
+      // 회원 로그아웃: user_login.txt 삭제
+      await clearLoginInfo(guest: false);
+      await FirebaseAuth.instance.signOut();
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+            (route) => false,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    Widget settingPage;
+    if (_loginInfo.isEmpty) {
+      settingPage = const Center(child: CircularProgressIndicator());
+    } else {
+      settingPage = UserSettingPage(
+        email: _loginInfo['email'] ?? '알 수 없음',
+        userUid: _loginInfo['uid'] ?? '알 수 없음',
+        createDate: _loginInfo['loginDate'] ?? '알 수 없음',
+        themeColor: _themeColor,
+        insectCount: 0,
+        onLogout: _onLogout,
+        userData: _loginInfo,
+        refreshUserData: () {},
+      );
+    }
 
     final pages = [
       CameraPage(themeColor: _themeColor, onPhotoTaken: _loadImages),
@@ -175,19 +228,7 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       SearchPage(themeColor: _themeColor),
       GamePage(themeColor: _themeColor),
-      UserSettingPage(
-        email: user?.email ?? '알 수 없음',
-        userUid: user?.uid ?? '알 수 없음',
-        createDate: _userData?['joinDate'] ??
-            (user?.metadata.creationTime != null
-                ? "${user!.metadata.creationTime!.year}년 ${user.metadata.creationTime!.month}월 ${user.metadata.creationTime!.day}일"
-                : '알 수 없음'),
-        insectCount: _userData?['insectCount'] ?? 0,
-        themeColor: _themeColor,
-        onLogout: _onLogout,
-        userData: _userData,
-        refreshUserData: _loadUserData,
-      ),
+      settingPage,
     ];
 
     return Scaffold(
