@@ -5,7 +5,6 @@
   "defense": 15,
   "health": 120,
   "speed": 10,
-  "passive": "",
   "critical": 0.1,
   "evasion": 0.1,
   "order": "딱정벌레목",

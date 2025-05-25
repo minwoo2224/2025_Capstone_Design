@@ -227,7 +227,12 @@ class _MainNavigationState extends State<MainNavigation> {
         onImageDeleted: _loadImages,
       ),
       SearchPage(themeColor: _themeColor),
-      GamePage(themeColor: _themeColor),
+      GamePage(
+        userUid: 'dummy',
+        playerCards: [],
+        opponentCards: [],
+        themeColor: _themeColor,
+      ),
       settingPage,
     ];
 

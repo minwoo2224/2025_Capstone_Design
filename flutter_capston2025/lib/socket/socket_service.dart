@@ -4,52 +4,65 @@ import '../models/insect_card.dart';
 class SocketService {
   static late IO.Socket socket;
 
+  // 서버 IP로 변경
   static void connect() {
-    socket = IO.io('http://43.203.208.60:8080/', IO.OptionBuilder() //서버 주소
-        .setTransports(['websocket'])
-        .disableAutoConnect()
-        .build());
+    socket = IO.io('http://localhost:8080', <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': false,
+    });
 
     socket.connect();
 
-    socket.onConnect((_) => print("✅ 서버 연결됨"));
-    socket.onDisconnect((_) => print("❌ 연결 끊김"));
-
-    socket.on("updateStatus", (data) {
-      print("🌀 상태 업데이트: ${data['self']} 체력 ${data['selfHp']} / ${data['enemy']} 체력 ${data['enemyHp']}");
+    socket.onConnect((_) {
+      print('✅ Connected to server');
     });
 
-    socket.on("updateResult", (msg) {
-      print("🏆 결과: $msg");
+    socket.onDisconnect((_) {
+      print('❌ Disconnected from server');
     });
 
-    socket.onError((data) => print("⚠️ 에러 발생: $data"));
+    socket.on('card_length_error', (msg) {
+      print('❗ 서버 오류: $msg');
+    });
+
+    socket.on('matched', (msg) {
+      print('🎮 매칭 성공: $msg');
+    });
+
+    socket.on('matchResult', (msg) {
+      print('🏁 결과: $msg');
+    });
+
+    socket.on('nextRound', (data) {
+      print('🔁 다음 라운드 정보: $data');
+    });
+
+    socket.on('cardsInfo', (data) {
+      print('🃏 상대 카드 정보: $data');
+    });
   }
 
-  static void joinQueue(InsectCard card) {
-    final playerData = {
-      "name": card.name,
-      "attack": card.attack,
-      "defend": card.defense,
-      "hp": card.health,
-      "speed": card.speed,
-    };
+  static void sendCards(String username, List<InsectCard> cards) {
+    final cardData = cards.map((card) => {
+      'name': card.name,
+      'hp': card.health,
+      'attack': card.attack,
+      'defend': card.defense,
+      'speed': card.speed,
+      'type': card.type,
+    }).toList();
 
-    socket.emit("joinQueue", playerData);
-    print("🛰 joinQueue 요청 전송됨");
+    socket.emit('joinQueue', {
+      'name': username,
+      'cards': cardData,
+    });
   }
 
-  // ✅ 여기에 추가!
-  static void sendSingleCard(InsectCard card) {
-    final cardData = {
-      "name": card.name,
-      "attack": card.attack,
-      "defend": card.defense,
-      "hp": card.health,
-      "speed": card.speed,
-    };
+  static void sendCardData(String uid, List<InsectCard> cards) {
+    sendCards(uid, cards);
+  }
 
-    socket.emit("sendSingleCard", cardData);
-    print("📤 카드 전송됨: $cardData");
+  static void selectCard(int index) {
+    socket.emit('selectCard', index);
   }
 }

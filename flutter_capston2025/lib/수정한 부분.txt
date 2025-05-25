@@ -1,0 +1,16 @@
+1. card_selection_page.dart 파일 수정
+'선택 완료' 버튼 누르면 서버에 카드 3장이랑 고유 UID를 서버로 보내는 식으로 변경
+
+2. insect_card.dart
+곤충 카드의 스텟 중에서 passive 삭제
+스텟에서 passive 삭제에 따라 json파일에도 다 삭제
+
+3. dirctionary_page.dart
+도감에 있는 카드를 card_selection_page.dart에 전달하도록 수정
+전에는 비동기적으로 하드 코딩 방법이었음.
+아마도 별 문제는 없을 듯
+
+
+추후에 해야하는 것
+1. dictionary_page.dart
+도감에 있는 카드들이 assets/cards 폴더 안의 json 파일들을 사용자가 볼 수 있도록 자동으로 업데이트되는 기능

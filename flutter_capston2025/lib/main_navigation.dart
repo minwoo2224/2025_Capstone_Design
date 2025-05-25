@@ -83,7 +83,12 @@ class _MainNavigationState extends State<MainNavigation> {
       CameraPage(themeColor: _themeColor, onPhotoTaken: () {}),
       CollectionPage(themeColor: _themeColor, images: const [], previewColumns: 2, onPreviewSetting: () {}, onImageDeleted: () {}),
       SearchPage(themeColor: _themeColor),
-      GamePage(themeColor: _themeColor),
+      GamePage(
+        userUid: 'dummy',
+        playerCards: [],
+        opponentCards: [],
+        themeColor: _themeColor,
+      ),
       UserSettingPage(
         email: _loginInfo['email'] ?? '알 수 없음',
         userUid: _loginInfo['uid'] ?? '알 수 없음',

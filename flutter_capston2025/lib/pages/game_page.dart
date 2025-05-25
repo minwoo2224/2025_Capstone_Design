@@ -1,315 +1,208 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
-import '../models/insect_card.dart';
-import 'card_selection_page.dart';
+import 'package:flutter_capston2025/models/insect_card.dart';
+import 'package:flutter_capston2025/socket/socket_service.dart';
+import 'dart:math';
 
 class GamePage extends StatefulWidget {
-  final InsectCard? playerCard;
-  final InsectCard? opponentCard;
+  final String userUid;
+  final List<InsectCard> playerCards;
+  final List<dynamic> opponentCards;
   final Color themeColor;
 
   const GamePage({
-    super.key,
-    this.playerCard,
-    this.opponentCard,
+    Key? key,
+    required this.userUid,
+    required this.playerCards,
+    required this.opponentCards,
     required this.themeColor,
-  });
+  }) : super(key: key);
 
   @override
   State<GamePage> createState() => _GamePageState();
 }
 
-class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
-  late InsectCard player;
-  late InsectCard opponent;
-  int playerHealth = 0;
-  int opponentHealth = 0;
+class _GamePageState extends State<GamePage> {
+  int? selectedCardIndex;
   String battleLog = '';
-  bool playerTurn = true;
-  bool battleEnded = false;
-  bool showDamage = false;
-  int damageAmount = 0;
-
-  late AnimationController _attackController;
-  late Animation<Offset> _attackAnimation;
-  late AnimationController _hitController;
-  late Animation<Offset> _hitAnimation;
+  int round = 1;
+  bool waitingForOpponent = true;
+  List<dynamic> opponentCards = [];
 
   @override
   void initState() {
     super.initState();
-
-    if (widget.playerCard == null || widget.opponentCard == null) {
-      Future.microtask(() {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CardSelectionPage(
-              themeColor: widget.themeColor,
-              onPhotoTaken: () {},
-            ),
-          ),
-        );
-      });
-      return;
-    }
-
-    player = widget.playerCard!;
-    opponent = widget.opponentCard!;
-    playerHealth = player.health;
-    opponentHealth = opponent.health;
-
-    _initAnimations();
-    Future.delayed(const Duration(seconds: 1), startBattle);
-  }
-
-  void _initAnimations() {
-    _attackController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-
-    _hitController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-
-    _attackAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _attackController, curve: Curves.easeOut));
-
-    _hitAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(-0.1, 0),
-    ).animate(CurvedAnimation(parent: _hitController, curve: Curves.elasticIn));
+    opponentCards = widget.opponentCards;
+    SocketService.socket.on('matchResult', _onMatchResult);
+    SocketService.socket.on('nextRound', _onNextRound);
+    SocketService.socket.on('cardsInfo', _onCardsInfo);
   }
 
   @override
   void dispose() {
-    _attackController.dispose();
-    _hitController.dispose();
+    SocketService.socket.off('matchResult', _onMatchResult);
+    SocketService.socket.off('nextRound', _onNextRound);
+    SocketService.socket.off('cardsInfo', _onCardsInfo);
     super.dispose();
   }
 
-  void startBattle() async {
-    while (!battleEnded) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      await performAttack();
-    }
+  void _onMatchResult(dynamic msg) {
+    setState(() {
+      battleLog = msg.toString();
+    });
+    _showGameEndDialog(msg.toString());
   }
 
-  Future<void> performAttack() async {
-    if (battleEnded) return;
-
-    InsectCard attacker = playerTurn ? player : opponent;
-    InsectCard defender = playerTurn ? opponent : player;
-
-    bool evaded = Random().nextDouble() < defender.evasion;
-    bool critical = Random().nextDouble() < attacker.critical;
-
-    double typeMultiplier = getTypeMultiplier(attacker.type, defender.type);
-    int baseDamage = max(0, attacker.attack - defender.defense);
-    double totalDamage = baseDamage * typeMultiplier * (critical ? 1.5 : 1);
-    damageAmount = totalDamage.round();
-
-    _attackAnimation = TweenSequence<Offset>([
-      TweenSequenceItem(
-        tween: Tween(
-          begin: Offset.zero,
-          end: playerTurn ? const Offset(0.4, -0.2) : const Offset(-1.0, 1.0),
-        ),
-        weight: 1,
-      ),
-      TweenSequenceItem(
-        tween: Tween(
-          begin: playerTurn ? const Offset(0.4, -0.2) : const Offset(-1.0, 1.0),
-          end: playerTurn ? const Offset(-0.2, 0.1) : const Offset(0.5, -0.3),
-        ),
-        weight: 1,
-      ),
-      TweenSequenceItem(
-        tween: Tween(
-          begin: playerTurn ? const Offset(-0.2, 0.1) : const Offset(0.5, -0.3),
-          end: Offset.zero,
-        ),
-        weight: 1,
-      ),
-    ]).animate(CurvedAnimation(parent: _attackController, curve: Curves.easeOut));
-
-    _attackController.forward(from: 0);
-    if (!evaded) _hitController.forward(from: 0);
-
-    setState(() => showDamage = true);
-
-    await Future.delayed(const Duration(milliseconds: 600));
-
+  void _onNextRound(dynamic data) {
     setState(() {
-      showDamage = false;
-      if (evaded) {
-        battleLog = '${defender.name}이(가) 공격을 회피했습니다!';
-      } else {
-        if (playerTurn) {
-          opponentHealth = max(0, opponentHealth - damageAmount);
-        } else {
-          playerHealth = max(0, playerHealth - damageAmount);
-        }
-        battleLog = '${attacker.name}의 공격! ${critical ? "치명타! " : ""}$damageAmount의 피해를 입혔습니다';
-      }
-
-      if (playerHealth <= 0 || opponentHealth <= 0) {
-        battleEnded = true;
-        battleLog = playerHealth <= 0
-            ? '${opponent.name}의 승리!'
-            : '${player.name}의 승리!';
-      } else {
-        playerTurn = !playerTurn;
-      }
+      battleLog = '다음 라운드 시작';
+      selectedCardIndex = null;
+      round += 1;
+      waitingForOpponent = false;
     });
   }
 
-  double getTypeMultiplier(String atkType, String defType) {
-    if ((atkType == '가위' && defType == '보') ||
-        (atkType == '보' && defType == '바위') ||
-        (atkType == '바위' && defType == '가위')) {
-      return 1.5;
-    }
-    return 1.0;
+  void _onCardsInfo(dynamic data) {
+    setState(() {
+      opponentCards = List<Map<String, dynamic>>.from(data);
+      waitingForOpponent = false;
+    });
   }
 
-  Widget buildBattleInfoBar(String name, int hp, int maxHp, Alignment align) {
-    return Align(
-      alignment: align,
-      child: Container(
-        width: 160,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black87),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-            const SizedBox(height: 4),
-            LinearProgressIndicator(
-              value: hp / maxHp,
-              backgroundColor: Colors.grey[300],
-              color: Colors.redAccent,
-              minHeight: 8,
-            ),
-            Text('$hp / $maxHp', style: const TextStyle(fontSize: 10, color: Colors.black)),
-          ],
-        ),
+  void _selectCard(int index) {
+    if (selectedCardIndex != null) return;
+
+    setState(() {
+      selectedCardIndex = index;
+      waitingForOpponent = true;
+      battleLog = '선택한 카드: ${widget.playerCards[index].name}';
+    });
+
+    SocketService.selectCard(index);
+  }
+
+  Widget _buildCard(InsectCard card, bool isSelected) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isSelected ? widget.themeColor.withOpacity(0.4) : Colors.white,
+        border: Border.all(color: widget.themeColor, width: 2),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: isSelected
+            ? [
+          BoxShadow(
+            color: widget.themeColor.withOpacity(0.6),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          )
+        ]
+            : [],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(card.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text("공격력: ${card.attack}"),
+          Text("방어력: ${card.defense}"),
+          Text("체력: ${card.health}"),
+          Text("속도: ${card.speed}"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOpponentCard(Map<String, dynamic> cardData) {
+    return Container(
+      margin: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        border: Border.all(color: Colors.grey, width: 2),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(cardData['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text("공격력: ${cardData['attack']}"),
+          Text("방어력: ${cardData['defend']}"),
+          Text("체력: ${cardData['hp']}"),
+          Text("속도: ${cardData['speed']}"),
+        ],
+      ),
+    );
+  }
+
+  void _showGameEndDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text("게임 종료"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            child: const Text("홈으로"),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.playerCard == null || widget.opponentCard == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     return Scaffold(
-      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("곤충 배틀"),
+        title: Text('게임 - Round $round'),
         backgroundColor: widget.themeColor,
       ),
-      body: Stack(
+      body: Column(
         children: [
-          // ✅ 배경 이미지 추가
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/background/forest_background.png',
-              fit: BoxFit.cover,
+          if (battleLog.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(battleLog, style: const TextStyle(fontSize: 16)),
             ),
-          ),
-
-          // 기존 상대 곤충 UI
-          Positioned(
-            top: 50,
-            right: 16,
+          const SizedBox(height: 8),
+          Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                buildBattleInfoBar(opponent.name, opponentHealth, opponent.health, Alignment.centerRight),
-                const SizedBox(height: 4),
-                SlideTransition(
-                  position: playerTurn ? Tween<Offset>(begin: Offset.zero, end: Offset.zero).animate(_attackController) : _hitAnimation,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Image.asset(opponent.image, height: 100),
-                      if (showDamage && playerTurn)
-                        Positioned(
-                          top: 0,
-                          left: -70,
-                          child: Text(
-                            '-$damageAmount',
-                            style: const TextStyle(fontSize: 24, color: Colors.red, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                    ],
+                const Text("상대방 카드", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                SizedBox(
+                  height: 150,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: opponentCards.length,
+                    itemBuilder: (context, index) {
+                      return _buildOpponentCard(opponentCards[index]);
+                    },
+                  ),
+                ),
+                const Divider(),
+                const Text("내 카드", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(10),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                    ),
+                    itemCount: widget.playerCards.length,
+                    itemBuilder: (context, index) {
+                      final card = widget.playerCards[index];
+                      return GestureDetector(
+                        onTap: waitingForOpponent ? null : () => _selectCard(index),
+                        child: _buildCard(card, selectedCardIndex == index),
+                      );
+                    },
                   ),
                 ),
               ],
-            ),
-          ),
-
-          // 플레이어 곤충 UI
-          Positioned(
-            bottom: 100,
-            left: 16,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SlideTransition(
-                  position: playerTurn ? _attackAnimation : Tween<Offset>(begin: Offset.zero, end: Offset.zero).animate(_hitController),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Image.asset(player.image, height: 100),
-                      if (showDamage && !playerTurn)
-                        Positioned(
-                          top: 0,
-                          right: -70,
-                          child: Text(
-                            '-$damageAmount',
-                            style: const TextStyle(fontSize: 24, color: Colors.red, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 4),
-                buildBattleInfoBar(player.name, playerHealth, player.health, Alignment.centerLeft),
-              ],
-            ),
-          ),
-
-          // 전투 로그
-          Positioned(
-            bottom: 16,
-            left: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.black26),
-              ),
-              child: Text(
-                battleLog,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Colors.black),
-              ),
             ),
           ),
         ],

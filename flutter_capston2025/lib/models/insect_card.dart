@@ -9,7 +9,6 @@ class InsectCard {
   final int defense;
   final int health;
   final int speed;
-  final String passive;
   final double critical;
   final double evasion;
   final String order;
@@ -22,7 +21,6 @@ class InsectCard {
     required this.defense,
     required this.health,
     required this.speed,
-    required this.passive,
     required this.critical,
     required this.evasion,
     required this.order,
@@ -47,7 +45,6 @@ class InsectCard {
       defense: json['defense'],
       health: json['health'],
       speed: json['speed'],
-      passive: json['passive'],
       critical: (json['critical'] as num).toDouble(),
       evasion: (json['evasion'] as num).toDouble(),
       order: json['order'],
@@ -62,7 +59,6 @@ class InsectCard {
     'defense': defense,
     'health': health,
     'speed': speed,
-    'passive': passive,
     'critical': critical,
     'evasion': evasion,
     'order': order,
