@@ -10,6 +10,8 @@
 전에는 비동기적으로 하드 코딩 방법이었음.
 아마도 별 문제는 없을 듯
 
+4. game_page.dart
+서버와 socketIO 이용해서 통신하는 기능 추가
 
 추후에 해야하는 것
 1. dictionary_page.dart
