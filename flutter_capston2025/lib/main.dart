@@ -10,15 +10,19 @@ import 'package:path/path.dart' as path;
 import 'pages/camera_page.dart';
 import 'pages/collection_page.dart';
 import 'pages/search_page.dart';
-import 'pages/game_page.dart';
 import 'pages/login_page.dart';
 import 'pages/user_setting_page.dart';
+import 'pages/card_selection_page.dart';
+import 'models/insect_card.dart';
 import 'theme/game_theme.dart';
 import 'firebase/firebase_options.dart';
 import 'storage/login_storage.dart';
+import 'socket/socket_service.dart';
+import 'utils/load_all_cards.dart'; // 새로 만든 모든 카드 로드 함수
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SocketService.connect();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -90,7 +94,6 @@ class _MainNavigationState extends State<MainNavigation> {
   Color _themeColor = Colors.deepPurple;
   List<File> _images = [];
   int _previewColumns = 2;
-  Map<String, dynamic>? _userData;
 
   @override
   void initState() {
@@ -100,7 +103,6 @@ class _MainNavigationState extends State<MainNavigation> {
     _loginInfo = widget.loginInfo ?? {};
     _loadImages();
     _loadThemeColor();
-    _loadUserData();
   }
 
   Future<void> _loadThemeColor() async {
@@ -111,14 +113,6 @@ class _MainNavigationState extends State<MainNavigation> {
         _themeColor = Color(colorValue);
       });
     }
-  }
-
-  Future<void> _saveThemeColor(Color color) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('themeColor', color.value);
-    setState(() {
-      _themeColor = color;
-    });
   }
 
   Future<void> _loadImages() async {
@@ -136,10 +130,80 @@ class _MainNavigationState extends State<MainNavigation> {
     }
   }
 
-  void _onItemTapped(int index) {
+  void _onItemTapped(int index) async {
+    if (index == 3) {
+      // 게임 탭
+      final allCards = await loadAllCards(); // JSON에서 카드 로드
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CardSelectionPage(allCards: allCards),
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settingPage = _loginInfo.isEmpty
+        ? const Center(child: CircularProgressIndicator())
+        : UserSettingPage(
+      email: _loginInfo['email'] ?? '알 수 없음',
+      userUid: _loginInfo['uid'] ?? '알 수 없음',
+      createDate: _loginInfo['loginDate'] ?? '알 수 없음',
+      themeColor: _themeColor,
+      insectCount: 0,
+      onLogout: () async {
+        if (_isGuest) {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginPage()));
+        } else {
+          await clearLoginInfo(guest: false);
+          await FirebaseAuth.instance.signOut();
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginPage()));
+        }
+      },
+      userData: _loginInfo,
+      refreshUserData: () {},
+    );
+
+    final pages = [
+      CameraPage(themeColor: _themeColor, onPhotoTaken: _loadImages),
+      CollectionPage(
+        themeColor: _themeColor,
+        images: _images,
+        previewColumns: _previewColumns,
+        onPreviewSetting: () => _showPreviewSettingSheet(context),
+        onImageDeleted: _loadImages,
+      ),
+      SearchPage(themeColor: _themeColor),
+      const SizedBox(), // 게임 페이지는 따로 열림
+      settingPage,
+    ];
+
+    return Scaffold(
+      body: pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: _themeColor,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: '촬영'),
+          BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: '도감'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: '검색'),
+          BottomNavigationBarItem(icon: Icon(Icons.sports_kabaddi), label: '게임'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
+        ],
+      ),
+    );
   }
 
   void _showPreviewSettingSheet(BuildContext context) {
@@ -160,97 +224,6 @@ class _MainNavigationState extends State<MainNavigation> {
             );
           }).toList(),
         ),
-      ),
-    );
-  }
-
-  /// 🔥 Firestore에서 유저 정보 불러오기
-  Future<void> _loadUserData() async {
-    if (_isGuest) return;
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (doc.exists) {
-        setState(() {
-          _userData = doc.data();
-        });
-      }
-    }
-  }
-
-  // 로그아웃
-  void _onLogout() async {
-    if (_isGuest) {
-      // 게스트 로그아웃: txt를 남기고 그냥 로그인 페이지로 이동
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
-            (route) => false,
-      );
-    } else {
-      // 회원 로그아웃: user_login.txt 삭제
-      await clearLoginInfo(guest: false);
-      await FirebaseAuth.instance.signOut();
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
-            (route) => false,
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Widget settingPage;
-    if (_loginInfo.isEmpty) {
-      settingPage = const Center(child: CircularProgressIndicator());
-    } else {
-      settingPage = UserSettingPage(
-        email: _loginInfo['email'] ?? '알 수 없음',
-        userUid: _loginInfo['uid'] ?? '알 수 없음',
-        createDate: _loginInfo['loginDate'] ?? '알 수 없음',
-        themeColor: _themeColor,
-        insectCount: 0,
-        onLogout: _onLogout,
-        userData: _loginInfo,
-        refreshUserData: () {},
-      );
-    }
-
-    final pages = [
-      CameraPage(themeColor: _themeColor, onPhotoTaken: _loadImages),
-      CollectionPage(
-        themeColor: _themeColor,
-        images: _images,
-        previewColumns: _previewColumns,
-        onPreviewSetting: () => _showPreviewSettingSheet(context),
-        onImageDeleted: _loadImages,
-      ),
-      SearchPage(themeColor: _themeColor),
-      GamePage(
-        userUid: 'dummy',
-        playerCards: [],
-        opponentCards: [],
-        themeColor: _themeColor,
-      ),
-      settingPage,
-    ];
-
-    return Scaffold(
-      body: pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        selectedItemColor: _themeColor,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: '촬영'),
-          BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: '도감'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: '검색'),
-          BottomNavigationBarItem(icon: Icon(Icons.sports_kabaddi), label: '게임'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
-        ],
       ),
     );
   }

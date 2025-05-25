@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_capston2025/models/insect_card.dart';
 import 'package:flutter_capston2025/socket/socket_service.dart';
 import 'package:flutter_capston2025/storage/login_storage.dart';
-import 'package:flutter_capston2025/pages/game_page.dart'; // 게임 페이지 import 필요
+import 'package:flutter_capston2025/pages/game_page.dart';
 
 class CardSelectionPage extends StatefulWidget {
   final List<InsectCard> allCards;
@@ -70,15 +70,14 @@ class _CardSelectionPageState extends State<CardSelectionPage> {
 
     SocketService.sendCardData(userUid!, selectedCards);
 
-    // 서버로 카드 전송 후 GamePage로 이동
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => GamePage(
           userUid: userUid!,
           playerCards: selectedCards,
-          opponentCards: [], // 서버에서 수신 시 갱신됨 (초기값은 빈 리스트)
-          themeColor: Colors.blue, // 혹은 원하는 색상
+          opponentCards: [],
+          themeColor: Colors.blue,
         ),
       ),
     );
@@ -119,12 +118,18 @@ class _CardSelectionPageState extends State<CardSelectionPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(card.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  if (card.image.isNotEmpty)
+                    Image.asset(card.image, height: 60, fit: BoxFit.contain),
                   const SizedBox(height: 8),
-                  Text("공격력: ${card.attack}"),
-                  Text("방어력: ${card.defense}"),
-                  Text("체력: ${card.health}"),
-                  Text("속도: ${card.speed}"),
+                  Text(card.name,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                  const SizedBox(height: 4),
+                  Text("목: ${card.order}", style: const TextStyle(color: Colors.black)),
+                  Text("공격력: ${card.attack}", style: const TextStyle(color: Colors.black)),
+                  Text("방어력: ${card.defense}", style: const TextStyle(color: Colors.black)),
+                  Text("체력: ${card.health}", style: const TextStyle(color: Colors.black)),
+                  Text("속도: ${card.speed}", style: const TextStyle(color: Colors.black)),
                 ],
               ),
             ),

@@ -13,6 +13,10 @@
 4. game_page.dart
 서버와 socketIO 이용해서 통신하는 기능 추가
 
+5. lib/utils/load_all_cards.dart
+하드코딩 없이 모든 .json 파일을 자동으로 불러오기 위한 파일
+아직 미완성
+
 추후에 해야하는 것
 1. dictionary_page.dart
 도감에 있는 카드들이 assets/cards 폴더 안의 json 파일들을 사용자가 볼 수 있도록 자동으로 업데이트되는 기능
