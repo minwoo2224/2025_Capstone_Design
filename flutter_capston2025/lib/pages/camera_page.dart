@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -54,14 +57,52 @@ class _CameraPageState extends State<CameraPage> {
       if (!await photoDir.exists()) {
         await photoDir.create(recursive: true);
       }
+
       final fileName = 'insect_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final newFile =
-      await File(pickedFile.path).copy('${photoDir.path}/$fileName');
+      final imagePath = '${photoDir.path}/$fileName';
+      final newFile = await File(pickedFile.path).copy(imagePath);
+
+      final insectData = _generateInsectData(imagePath);
+      await _saveInsectData(insectData);
+
       setState(() {
         _lastImage = newFile;
       });
+
       widget.onPhotoTaken();
     }
+  }
+
+  Map<String, dynamic> _generateInsectData(String imagePath) {
+    final rand = Random();
+    final types = ['묵', '찌', '빠'];
+
+    return {
+      'name': 'Insect',
+      'image': imagePath,
+      'order': 'Order',
+      'type': types[rand.nextInt(types.length)],
+      'attack': rand.nextInt(101), // 0~100
+      'defense': rand.nextInt(101),
+      'health': rand.nextInt(101),
+      'speed': rand.nextInt(101),
+    };
+  }
+
+  Future<void> _saveInsectData(Map<String, dynamic> data) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/insect_data.json');
+
+    List<dynamic> existing = [];
+    if (await file.exists()) {
+      final content = await file.readAsString();
+      if (content.isNotEmpty) {
+        existing = jsonDecode(content);
+      }
+    }
+
+    existing.add(data);
+    await file.writeAsString(jsonEncode(existing));
   }
 
   @override
@@ -72,7 +113,7 @@ class _CameraPageState extends State<CameraPage> {
       body: Stack(
         children: [
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               image: DecorationImage(
                 image: AssetImage("assets/images/camera_page/space_bg.png"),
                 fit: BoxFit.cover,
@@ -91,7 +132,7 @@ class _CameraPageState extends State<CameraPage> {
                   color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: widget.themeColor, width: 3),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black26,
                       blurRadius: 8,
@@ -113,21 +154,23 @@ class _CameraPageState extends State<CameraPage> {
                 children: [
                   Image.asset("assets/icons/camera_guide.png", height: 100),
                   const SizedBox(height: 12),
-                  Text(
+                  const Text(
                     '사진이 없습니다!',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                       shadows: [
-                        Shadow(color: Colors.black45, offset: Offset(1, 1), blurRadius: 2),
+                        Shadow(
+                            color: Colors.black45,
+                            offset: Offset(1, 1),
+                            blurRadius: 2),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-
           Positioned(
             bottom: 40,
             left: 30,
@@ -139,13 +182,16 @@ class _CameraPageState extends State<CameraPage> {
                 decoration: BoxDecoration(
                   color: Colors.redAccent,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black26, blurRadius: 5, offset: Offset(2, 4)),
+                  boxShadow: const [
+                    BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 5,
+                        offset: Offset(2, 4)),
                   ],
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Icon(Icons.camera_alt, color: Colors.white, size: 30),
                     SizedBox(width: 12),
                     Text(
@@ -162,7 +208,6 @@ class _CameraPageState extends State<CameraPage> {
               ),
             ),
           ),
-          // 상단에 아무 버튼도 없음
         ],
       ),
     );
