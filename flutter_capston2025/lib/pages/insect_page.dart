@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'insect_detail_page.dart';
 
 class InsectPage extends StatefulWidget {
   final Color themeColor;
@@ -38,6 +38,72 @@ class _InsectPageState extends State<InsectPage> {
     }
   }
 
+  String _getIconPath(String type) {
+    switch (type) {
+      case '가위':
+        return 'assets/icons/scissors.png';
+      case '바위':
+        return 'assets/icons/rock.png';
+      case '보':
+        return 'assets/icons/paper.png';
+      default:
+        return '';
+    }
+  }
+
+  Widget _buildInsectCard(Map<String, dynamic> insect) {
+    final imagePath = insect['image'];
+    final type = insect['type'];
+    final iconPath = _getIconPath(type);
+
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          enableDrag: false,
+          isDismissible: false,
+          builder: (_) => InsectDetailPage(insect: insect),
+        );
+      },
+      child: Column(
+        children: [
+          Expanded(
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(imagePath),
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                ),
+                if (iconPath.isNotEmpty)
+                  Positioned(
+                    left: 6,
+                    bottom: 6,
+                    child: Image.asset(
+                      iconPath,
+                      width: 28,
+                      height: 28,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            insect['name'] ?? 'Unknown',
+            style: const TextStyle(color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,25 +126,7 @@ class _InsectPageState extends State<InsectPage> {
           ),
           itemCount: _insects.length,
           itemBuilder: (context, index) {
-            final insect = _insects[index];
-            return Column(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(insect['image']),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  insect['name'] ?? 'Unknown',
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ],
-            );
+            return _buildInsectCard(_insects[index]);
           },
         ),
       ),

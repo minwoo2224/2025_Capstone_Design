@@ -34,6 +34,10 @@ class _GalleryPageState extends State<GalleryPage> {
     super.initState();
     _columns = widget.previewColumns;
     _images = widget.images;
+
+    // 최신 이미지가 먼저 나오도록 정렬
+    _images.sort((a, b) => b.path.compareTo(a.path));
+
     _groupImagesByDate();
   }
 

@@ -35,6 +35,7 @@ flutter:
   assets:
     - assets/cards/
     - assets/images/
+    - assets/icons/
     - assets/images/camera_page/
     - assets/images/collection_page/
     - assets/images/family_detail_page/
@@ -64,6 +65,9 @@ flutter:
     - assets/images/family_detail_page/벌/꿀벌과/꿀벌1.jpg
     - assets/images/family_detail_page/벌/말벌과/말벌1.jpg
     - assets/icons/camera_guide.png
+    - assets/icons/rock.png
+    - assets/icons/scissors.png
+    - assets/icons/paper.png
 
 
   # assets:
