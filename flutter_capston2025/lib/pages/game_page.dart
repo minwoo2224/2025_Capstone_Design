@@ -80,39 +80,41 @@ class _GamePageState extends State<GamePage> {
   }
 
   Widget _buildCard(dynamic cardData, bool isSelected) {
-    final name = cardData.name ?? cardData['name'];
-    final image = cardData.image ?? cardData['image'];
-    final order = cardData.order ?? cardData['order'];
-    final attack = cardData.attack ?? cardData['attack'];
-    final defense = cardData.defense ?? cardData['defense'];
-    final health = cardData.health ?? cardData['health'];
-    final speed = cardData.speed ?? cardData['speed'];
+    final name = cardData is InsectCard ? cardData.name : cardData['name'];
+    final image = cardData is InsectCard ? cardData.image : cardData['image'];
+    final order = cardData is InsectCard ? cardData.order : cardData['order'];
+    final attack = cardData is InsectCard ? cardData.attack : cardData['attack'];
+    final defense = cardData is InsectCard ? cardData.defense : cardData['defense'];
+    final health = cardData is InsectCard ? cardData.health : cardData['health'];
+    final speed = cardData is InsectCard ? cardData.speed : cardData['speed'];
 
     return Container(
       margin: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       decoration: BoxDecoration(
         color: isSelected ? Colors.lightBlue[50] : Colors.white,
         border: Border.all(color: Colors.blue, width: 2),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (image != null) Image.asset(image, height: 60),
-            const SizedBox(height: 8),
-            Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black)),
-            Text("목: $order", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-            Text("공: $attack", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-            Text("방: $defense", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-            Text("체: $health", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-            Text("속: $speed", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-          ],
-        ),
+      width: 120,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (image != null) Image.asset(image, height: 60),
+          const SizedBox(height: 6),
+          Text('$name', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black)),
+          Text("목: $order", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black)),
+          Text("공: $attack", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black)),
+          Text("방: $defense", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black)),
+          Text("체: $health", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black)),
+          Text("속: $speed", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black)),
+        ],
       ),
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {
