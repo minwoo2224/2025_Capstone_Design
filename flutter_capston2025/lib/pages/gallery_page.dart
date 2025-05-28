@@ -143,10 +143,10 @@ class _GalleryPageState extends State<GalleryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("갤러리")),
       body: Column(
         children: [
-          Container(height: kBottomNavigationBarHeight, color: widget.themeColor),
+          //빈 Bar
+          //Container(height: kBottomNavigationBarHeight, color: widget.themeColor),
           Expanded(
             child: _groupedImages.isEmpty
                 ? const Center(child: Text("사진이 없습니다.", style: TextStyle(fontSize: 18)))

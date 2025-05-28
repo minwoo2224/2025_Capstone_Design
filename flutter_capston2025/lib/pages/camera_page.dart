@@ -75,17 +75,19 @@ class _CameraPageState extends State<CameraPage> {
 
   Map<String, dynamic> _generateInsectData(String imagePath) {
     final rand = Random();
-    final types = ['묵', '찌', '빠'];
+    const types = ['가위', '바위', '보'];
 
     return {
       'name': 'Insect',
-      'image': imagePath,
-      'order': 'Order',
       'type': types[rand.nextInt(types.length)],
-      'attack': rand.nextInt(101), // 0~100
+      'attack': rand.nextInt(101),
       'defense': rand.nextInt(101),
       'health': rand.nextInt(101),
       'speed': rand.nextInt(101),
+      'critical': 0.1,
+      'evasion': 0.1,
+      'order': 'Order',
+      'image': imagePath,
     };
   }
 
