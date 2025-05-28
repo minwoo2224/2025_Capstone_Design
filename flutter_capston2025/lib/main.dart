@@ -197,7 +197,7 @@ class _MainNavigationState extends State<MainNavigation> {
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: '촬영'),
-          BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: '도감'),
+          BottomNavigationBarItem(icon: Icon(Icons.bug_report), label: '곤충'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: '검색'),
           BottomNavigationBarItem(icon: Icon(Icons.sports_kabaddi), label: '게임'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
