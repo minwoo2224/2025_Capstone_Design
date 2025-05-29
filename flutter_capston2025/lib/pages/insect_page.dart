@@ -32,7 +32,7 @@ class _InsectPageState extends State<InsectPage> {
         final data = jsonDecode(content) as List<dynamic>;
         final insects = data.cast<Map<String, dynamic>>();
         setState(() {
-          _insects = insects.reversed.toList(); // 최신 순 정렬
+          _insects = insects.reversed.toList();
         });
       }
     }
@@ -51,6 +51,20 @@ class _InsectPageState extends State<InsectPage> {
     }
   }
 
+  void _deleteInsect(Map<String, dynamic> insect) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/insect_data.json');
+
+    setState(() {
+      _insects.removeWhere((item) => item['image'] == insect['image']);
+    });
+
+    final updatedJson = jsonEncode(_insects.reversed.toList());
+    await file.writeAsString(updatedJson);
+
+    // 이미지 파일은 삭제하지 않음
+  }
+
   Widget _buildInsectCard(Map<String, dynamic> insect) {
     final imagePath = insect['image'];
     final type = insect['type'];
@@ -64,7 +78,10 @@ class _InsectPageState extends State<InsectPage> {
           backgroundColor: Colors.transparent,
           enableDrag: false,
           isDismissible: false,
-          builder: (_) => InsectDetailPage(insect: insect),
+          builder: (_) => InsectDetailPage(
+            insect: insect,
+            onDelete: () => _deleteInsect(insect),
+          ),
         );
       },
       child: Column(

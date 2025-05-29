@@ -3,8 +3,13 @@ import 'package:flutter/material.dart';
 
 class InsectDetailPage extends StatelessWidget {
   final Map<String, dynamic> insect;
+  final VoidCallback onDelete;
 
-  const InsectDetailPage({super.key, required this.insect});
+  const InsectDetailPage({
+    super.key,
+    required this.insect,
+    required this.onDelete,
+  });
 
   String _getIconPath(String type) {
     switch (type) {
@@ -17,6 +22,29 @@ class InsectDetailPage extends StatelessWidget {
       default:
         return '';
     }
+  }
+
+  void _confirmDeletion(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('정말 놓아줍니까?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+              onDelete();
+            },
+            child: const Text('예'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('아니오'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -74,36 +102,26 @@ class InsectDetailPage extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 '$order과',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                ),
+                style: const TextStyle(fontSize: 16, color: Colors.black),
               ),
               const SizedBox(height: 4),
               Text(
                 '$health HP',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black,
-                ),
+                style: const TextStyle(fontSize: 14, color: Colors.black),
               ),
               const SizedBox(height: 20),
               Center(
                 child: Text(
                   'ATK ${insect['attack']} / DEF ${insect['defense']} / SPD ${insect['speed']}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black,
-                  ),
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
                 ),
               ),
             ],
           ),
-          Positioned(
-            bottom: 16,
-            left: 0,
-            right: 0,
-            child: Center(
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16),
               child: GestureDetector(
                 onTap: () => Navigator.of(context).pop(),
                 child: Container(
@@ -114,6 +132,24 @@ class InsectDetailPage extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.close, color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16, right: 32),
+              child: GestureDetector(
+                onTap: () => _confirmDeletion(context),
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: Colors.indigo,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.delete, color: Colors.white),
                 ),
               ),
             ),
