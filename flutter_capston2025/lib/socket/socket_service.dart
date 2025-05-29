@@ -6,7 +6,7 @@ class SocketService {
 
   // 서버 IP로 변경
   static void connect() {
-    socket = IO.io('http://localhost:8080', <String, dynamic>{
+    socket = IO.io('http://3.34.200.164:8080', <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
     });
