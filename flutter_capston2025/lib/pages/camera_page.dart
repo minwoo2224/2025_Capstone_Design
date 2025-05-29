@@ -124,11 +124,11 @@ class _CameraPageState extends State<CameraPage> {
           ),
           if (_lastImage != null)
             Positioned(
-              top: 100,
+              top: 100, // 필요에 따라 이 값도 조절하여 이미지 위치를 맞출 수 있습니다.
               left: 30,
               right: 30,
               child: Container(
-                height: screenHeight * 0.65,
+                height: screenHeight * 0.325,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.9),
@@ -149,27 +149,35 @@ class _CameraPageState extends State<CameraPage> {
               ),
             )
           else
+          // 이곳이 수정된 부분입니다.
             Align(
-              alignment: Alignment.center,
+              alignment: Alignment.center, // Column 자체를 가운데 정렬
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.min, // 필요한 만큼만 공간 차지
                 children: [
-                  Image.asset("assets/icons/camera_guide.png", height: 100),
-                  const SizedBox(height: 12),
+                  Image.asset(
+                    "assets/icons/camera_guide.png",
+                    height: 340, // 요청하신 높이로 설정
+                  ),
+                  // SizedBox는 이제 필요에 따라 간격을 직접 조절하는 데 사용
+                  const SizedBox(height: 20), // 이미지와 텍스트 사이 간격
+
                   const Text(
-                    '사진이 없습니다!',
+                    '사진을 찍어보세요!!',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
                       shadows: [
                         Shadow(
                             color: Colors.black45,
-                            offset: Offset(1, 1),
-                            blurRadius: 2),
+                            offset: Offset(3, 3),
+                            blurRadius: 6),
                       ],
                     ),
                   ),
+                  // 만약 텍스트 아래에도 공간을 주고 싶다면 여기에 SizedBox 추가
+                  // const SizedBox(height: 200), // 이전에 요청하신 200px 간격은 Text 아래에 추가하면 적절할 수 있습니다.
                 ],
               ),
             ),
