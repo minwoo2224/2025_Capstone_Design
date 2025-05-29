@@ -20,7 +20,7 @@ io.on("connection", (socket) => {
             socket.emit("card_length_error", "you have to select three cards!");
             return;
         }
-
+        
         // key:players[socket.id], {value}
         players[socket.id] = {
             name: playerData.name,
@@ -32,6 +32,7 @@ io.on("connection", (socket) => {
         };
 
         waitingQueue.push(socket.id);
+        console.log("waitingQueue: ", waitingQueue);
         //room matching logic
         if (waitingQueue.length >= 2) {
             const id1 = waitingQueue.shift();
@@ -48,6 +49,8 @@ io.on("connection", (socket) => {
             const [p1, p2] = roomPlayers;
             p1.socket.emit("cardsInfo", p2.cards);
             p2.socket.emit("cardsInfo", p1.cards);
+            console.log(p2.cards);
+            console.log(p1.cards);
 
             console.log(io.sockets.adapter.rooms);
         };
@@ -74,6 +77,7 @@ io.on("connection", (socket) => {
             battle(p1_card_info, p2_card_info, (winnerSocketId) => {
                 players[winnerSocketId].wins += 1;
 
+                //이긴 뒤 연결 끊기 넣기
                 if (players[winnerSocketId].wins === 2) {
 
                     io.to(roomId).emit("matchResult", players[winnerSocketId].name + "wins!");
@@ -94,10 +98,18 @@ io.on("connection", (socket) => {
     });
 
     //disconnect logic
+    //수정
     socket.on("disconnect", () => {
         console.log("Disconnected: ", socket.id);
         const roomId = players[socket.id]?.roomId;
-
+        const index = waitingQueue.indexOf(socket.id);
+        console.log("waitingQueue: ", waitingQueue);
+        if (index !== -1) waitingQueue.splice(index, 1);
+        if (players[socket.id]) {
+            const roomId = players[socket.id].roomId;
+            delete players[socket.id];
+            io.to(roomId).emit("oppnent_distconnect");
+        }
         if (roomId) {
             const roomPlayers = Object.values(players).filter(p => p.roomId === roomId);
 
@@ -118,5 +130,5 @@ app.get("/", (req, res) => {
 });
 
 server.listen(8080, () => {
-    console.log("server running at http://localhost:8080");
+    console.log(`server running at http://localhost:8080`);
 });
