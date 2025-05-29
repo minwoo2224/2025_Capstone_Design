@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart';
+import 'package:flutter_capston2025/pages/login_page.dart'; // 절대 경로 임포트 유지
 
 class UserSettingPage extends StatelessWidget {
   final String email;
   final String userUid;
-  final String createDate;
+  final String createDate; // 이미 적절히 가공된 String을 받는다고 가정
   final int insectCount;
   final Color themeColor;
   final VoidCallback onLogout;
-  final Map<String, dynamic>? userData;
-  final VoidCallback? refreshUserData;
+  final Map<String, dynamic>? userData; // Map<String, dynamic>으로 받도록 유지
+  final VoidCallback? refreshUserData; // 데이터 새로고침 콜백
 
   const UserSettingPage({
     super.key,
@@ -25,19 +25,32 @@ class UserSettingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 알 수 없음 상태면 자동으로 로그인 페이지로 강제 이동
+    print('DEBUG: user_setting_page.dart - received createDate: $createDate');
+    print('DEBUG: user_setting_page.dart - Type of received createDate: ${createDate.runtimeType}');
+
+    // 필수 데이터가 없을 경우 (예: 초기 로딩 오류 또는 사용자 정보가 제대로 전달되지 않은 경우)
+    // 로그인 페이지로 강제 이동하여 사용자에게 재로그인을 유도합니다.
     if (email == '알 수 없음' || userUid == '알 수 없음') {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginPage()),
-              (route) => false,
-        );
+        // 현재 라우트 스택에 로그인 페이지가 이미 있다면 중복 푸시 방지
+        if (ModalRoute.of(context)?.settings.name != '/') {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginPage()),
+                (route) => false,
+          );
+        }
       });
+      // 데이터가 없는 상태에서는 빈 위젯을 반환하여 렌더링 오류를 방지
       return const SizedBox();
     }
 
     final isGuest = email.toLowerCase() == 'guest@example.com';
+
+    // userData 맵에서 'userNumber' 필드를 안전하게 가져옵니다.
+    // 필드가 없거나 null일 경우 '알 수 없음'으로 표시합니다.
+    final String displayUserNumber = userData?['userNumber']?.toString() ?? '알 수 없음';
+
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -53,14 +66,15 @@ class UserSettingPage extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 30),
-                // 캐릭터 이미지 (크기 복원, 위쪽 margin 조정)
+                // 캐릭터 이미지
                 SizedBox(
-                  height: 340, // 고정값 또는 MediaQuery로 더 크게 할 수도 있음
+                  height: 340,
                   child: Image.asset(
                     'assets/images/BugStrike_user_images.png',
                     fit: BoxFit.contain,
                   ),
                 ),
+                // 게스트 사용자일 경우 추가 정보 표시
                 if (isGuest) ...[
                   const SizedBox(height: 8),
                   const Text(
@@ -73,6 +87,7 @@ class UserSettingPage extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 10),
+                // 사용자 정보 카드
                 Card(
                   color: Colors.white12,
                   margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
@@ -84,9 +99,10 @@ class UserSettingPage extends StatelessWidget {
                       children: [
                         _infoRow("이메일", email),
                         const SizedBox(height: 10),
-                        _infoRow("고유 UID", userUid),
+                        _infoRow("회원 번호", displayUserNumber),
                         const SizedBox(height: 10),
-                        _infoRow("계정 생성일", createDate.contains('T') ? createDate.split('T')[0] : createDate),
+                        // 'createDate'는 Firebase의 'joinDate' 또는 로컬의 'loginDate' 중 사용
+                        _infoRow("계정 생성일", createDate), // createDate가 이미 가공된 String이므로 별도 처리 불필요
                         const SizedBox(height: 10),
                         _infoRow("잡은 곤충 개수", "$insectCount개"),
                       ],
@@ -94,6 +110,7 @@ class UserSettingPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 30),
+                // 로그아웃 버튼
                 Center(
                   child: ElevatedButton(
                     onPressed: onLogout,
@@ -114,6 +131,7 @@ class UserSettingPage extends StatelessWidget {
     );
   }
 
+  // 정보 표시를 위한 헬퍼 위젯
   Widget _infoRow(String title, String value) {
     return Row(
       children: [
