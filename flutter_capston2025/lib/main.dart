@@ -12,16 +12,16 @@ import 'pages/collection_page.dart';
 import 'pages/search_page.dart';
 import 'pages/login_page.dart';
 import 'pages/user_setting_page.dart';
-import 'pages/card_selection_page.dart';
-import 'models/insect_card.dart';
-import 'theme/game_theme.dart';
+import 'pages/game_page.dart';
 import 'firebase/firebase_options.dart';
-import 'storage/login_storage.dart'; // import login_storage.dart
+import 'storage/login_storage.dart';
+import 'utils/load_all_cards.dart';
 import 'socket/socket_service.dart';
-import 'utils/load_all_cards.dart'; // 새로 만든 모든 카드 로드 함수
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ 소켓 초기화
   SocketService.connect();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -30,44 +30,12 @@ void main() async {
   final userInfo = await readLoginInfo(guest: false);
   bool isGuest = guestInfo.isNotEmpty;
   bool isLoggedIn = userInfo.isNotEmpty;
-  Map<String, dynamic> actualUserInfo = {};
-
-  if (isLoggedIn && userInfo.containsKey('uid') && userInfo['uid'] != 'guest_uid') {
-    try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userInfo['uid'])
-          .get();
-      if (userDoc.exists && userDoc.data() != null) {
-        actualUserInfo = userDoc.data()!;
-        if (actualUserInfo['joinDate'] is Timestamp) {
-          actualUserInfo['joinDate'] =
-              (actualUserInfo['joinDate'] as Timestamp).toDate().toIso8601String();
-        }
-        actualUserInfo['email'] ??= userInfo['email'] ?? '';
-        actualUserInfo['uid'] ??= userInfo['uid'];
-        actualUserInfo['joinDate'] ??= DateTime.now().toIso8601String();
-        actualUserInfo['insectCount'] ??= 0;
-        actualUserInfo['userNumber'] ??= '000000';
-        actualUserInfo['nickname'] ??= '이름없는벌레';
-      }
-    } catch (_) {
-      actualUserInfo = userInfo;
-    }
-  } else {
-    actualUserInfo = userInfo;
-    actualUserInfo['email'] ??= '';
-    actualUserInfo['uid'] ??= '';
-    actualUserInfo['joinDate'] ??= DateTime.now().toIso8601String();
-    actualUserInfo['insectCount'] ??= 0;
-    actualUserInfo['userNumber'] ??= '000000';
-  }
 
   runApp(MyApp(
     isGuest: isGuest,
     isLoggedIn: isLoggedIn,
     guestInfo: guestInfo,
-    userInfo: actualUserInfo,
+    userInfo: userInfo,
   ));
 }
 
@@ -103,7 +71,7 @@ class MyApp extends StatelessWidget {
 class MainNavigation extends StatefulWidget {
   final int selectedIndex;
   final bool isGuest;
-  final Map<String, dynamic>? loginInfo; // ⭐ Map<String, dynamic>으로 변경
+  final Map<String, dynamic>? loginInfo;
 
   const MainNavigation({
     super.key,
@@ -119,9 +87,9 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   late int _selectedIndex;
   late bool _isGuest;
-  late Map<String, dynamic> _loginInfo; // ⭐ Map<String, dynamic>으로 변경
+  late Map<String, dynamic> _loginInfo;
   Color _themeColor = Colors.deepPurple;
-  int _insectCount = 0; // ⭐ 초기값 할당 및 int 타입으로 유지
+  int _insectCount = 0;
   List<File> _images = [];
   int _previewColumns = 2;
 
@@ -130,64 +98,48 @@ class _MainNavigationState extends State<MainNavigation> {
     super.initState();
     _selectedIndex = widget.selectedIndex;
     _isGuest = widget.isGuest;
-    _loginInfo = widget.loginInfo ?? {}; // widget.loginInfo를 직접 사용
-    _loadAllUserData(); // 데이터 로딩 함수 추가
+    _loginInfo = widget.loginInfo ?? {};
+    _loadAllUserData();
     _loadImages();
     _loadThemeColor();
   }
 
-  // ⭐ 새로 추가된 _loadAllUserData 함수 (main.dart의 로직과 유사)
   Future<void> _loadAllUserData() async {
-    Map<String, dynamic> info;
-    if (_isGuest) {
-      info = await readLoginInfo(guest: true);
-      print('DEBUG (MainNavigation): Guest info from storage: $info');
-      print('DEBUG (MainNavigation): Type of joinDate in guest info: ${info['joinDate']?.runtimeType}');
-    } else {
-      info = await readLoginInfo(guest: false);
-      print('DEBUG (MainNavigation): User info from storage: $info');
-      print('DEBUG (MainNavigation): Type of joinDate in user info: ${info['joinDate']?.runtimeType}');
+    Map<String, dynamic> info = _isGuest
+        ? await readLoginInfo(guest: true)
+        : await readLoginInfo(guest: false);
 
-      if (info.containsKey('uid')) {
-        try {
-          final userDoc = await FirebaseFirestore.instance.collection('users').doc(info['uid'].toString()).get();
-          if (userDoc.exists && userDoc.data() != null) {
-            print('DEBUG (MainNavigation): Firestore data before merge: ${userDoc.data()}');
-            // Firestore에서 불러온 데이터를 _loginInfo에 병합 (Firestore 데이터가 우선)
-            userDoc.data()!.forEach((key, value) {
-              info[key] = value; // value는 이미 dynamic
-            });
-            // Firebase에서 Timestamp로 저장된 경우, 이를 String으로 변환하여 저장
-            if (info['joinDate'] is Timestamp) {
-              info['joinDate'] = (info['joinDate'] as Timestamp).toDate().toIso8601String();
-              print('DEBUG (MainNavigation): joinDate converted from Timestamp: ${info['joinDate']}');
-            }
-            print('DEBUG (MainNavigation): Info after Firestore merge: $info');
-            print('DEBUG (MainNavigation): Type of joinDate after Firestore merge: ${info['joinDate']?.runtimeType}');
-
-          } else {
-            print("경고: 로그인된 사용자이나 Firestore에 문서가 없습니다.");
+    if (!_isGuest && info.containsKey('uid')) {
+      try {
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(info['uid']).get();
+        if (userDoc.exists && userDoc.data() != null) {
+          userDoc.data()!.forEach((key, value) => info[key] = value);
+          if (info['joinDate'] is Timestamp) {
+            info['joinDate'] = (info['joinDate'] as Timestamp).toDate().toIso8601String();
           }
-        } catch (e) {
-          print("Firestore에서 사용자 데이터 로드 중 오류 발생: $e");
+
+          final prefs = await SharedPreferences.getInstance();
+          if (info.containsKey('nickname')) {
+            prefs.setString('nickname', info['nickname'].toString());
+          }
         }
+      } catch (e) {
+        print("Firestore 로딩 오류: $e");
       }
     }
 
-    // 로컬 info 맵의 필수 필드 보완 (Firebase에서 가져오지 못했거나 없는 경우)
     info['email'] ??= '알 수 없음';
     info['uid'] ??= '알 수 없음';
-    info['joinDate'] ??= DateTime.now().toIso8601String(); // ISO 8601 String으로 저장
-    info['insectCount'] ??= 0; // 숫자로 유지
+    info['joinDate'] ??= DateTime.now().toIso8601String();
+    info['insectCount'] ??= 0;
     info['userNumber'] ??= '000000';
-    print('DEBUG (MainNavigation): Info after default value assignment: $info');
-    print('DEBUG (MainNavigation): Type of joinDate after default value assignment: ${info['joinDate']?.runtimeType}');
+    info['nickname'] ??= _isGuest ? '게스트' : '이름없는벌레';
 
     setState(() {
       _loginInfo = info;
-      print('DEBUG (MainNavigation): _loginInfo in setState: $_loginInfo');
-      print('DEBUG (MainNavigation): Type of _loginInfo["joinDate"] in setState: ${_loginInfo['joinDate']?.runtimeType}');
-      _insectCount = (_loginInfo['insectCount'] is int) ? _loginInfo['insectCount'] as int : int.tryParse(_loginInfo['insectCount']?.toString() ?? '0') ?? 0;
+      _insectCount = (info['insectCount'] is int)
+          ? info['insectCount']
+          : int.tryParse(info['insectCount']?.toString() ?? '0') ?? 0;
     });
   }
 
@@ -218,113 +170,91 @@ class _MainNavigationState extends State<MainNavigation> {
 
   void _onItemTapped(int index) async {
     if (index == 3) {
-      // 게임 탭
-      final allCards = await loadAllCards(); // JSON에서 카드 로드
+      final allCards = await loadAllCards();
       if (context.mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => CardSelectionPage(allCards: allCards),
+            builder: (_) => GamePage(
+              userUid: _loginInfo['uid']?.toString() ?? 'guest_uid',
+              playerCards: allCards,
+              opponentCards: [],
+              themeColor: _themeColor,
+            ),
           ),
         );
       }
       return;
     }
-
     setState(() {
       _selectedIndex = index;
     });
   }
 
-  // 사용자 데이터를 새로고침하는 함수 (Firestore에서 다시 불러오기)
-  Future<void> _refreshUserData() async {
-    if (!_isGuest && _loginInfo.containsKey('uid')) {
-      try {
-        final userUid = _loginInfo['uid']!.toString(); // dynamic에서 String으로 변환
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(userUid).get();
-        if (userDoc.exists && userDoc.data() != null) {
-          setState(() {
-            _loginInfo = userDoc.data()!; // Firestore 데이터는 Map<String, dynamic>
-            // Timestamp 변환 로직도 다시 적용
-            if (_loginInfo['joinDate'] is Timestamp) {
-              _loginInfo['joinDate'] = (_loginInfo['joinDate'] as Timestamp).toDate().toIso8601String();
-            }
-          });
-          print("사용자 데이터 새로고침 완료: $_loginInfo");
-        }
-      } catch (e) {
-        print("사용자 데이터 새로고침 중 오류 발생: $e");
-      }
+  Future<void> _onLogout() async {
+    if (_isGuest) {
+      await clearLoginInfo(guest: true);
+    } else {
+      await clearLoginInfo(guest: false);
+      await FirebaseAuth.instance.signOut();
+    }
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+          (route) => false,
+    );
+  }
+
+  String formatJoinDate(dynamic joinDateValue) {
+    if (joinDateValue is Timestamp) {
+      return joinDateValue.toDate().toIso8601String().split('T').first;
+    } else if (joinDateValue is String && joinDateValue.contains('T')) {
+      return joinDateValue.split('T').first;
+    } else if (joinDateValue is String) {
+      return joinDateValue;
+    } else {
+      return _loginInfo['loginDate']?.toString().split('T').first ?? '알 수 없음';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // _loginInfo가 아직 로딩 중이거나 필수 필드가 없으면 로딩 표시
-    if (_loginInfo.isEmpty && !_isGuest) { // 게스트는 로딩 필요 없음
+    if (_loginInfo.isEmpty && !_isGuest) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    // createDate를 UserSettingPage에 전달하기 전에 String으로 가공
-    String createDateToPass;
-    dynamic joinDateValue = _loginInfo['joinDate']; // dynamic 타입으로 받기
-
-    print('DEBUG (MainNavigation build): joinDateValue from _loginInfo: $joinDateValue');
-    print('DEBUG (MainNavigation build): Type of joinDateValue: ${joinDateValue?.runtimeType}');
-
-    if (joinDateValue is Timestamp) {
-      createDateToPass = joinDateValue.toDate().toIso8601String().split('T').first;
-      print('DEBUG (MainNavigation build): joinDateValue is Timestamp. createDateToPass: $createDateToPass');
-    } else if (joinDateValue is String && joinDateValue.contains('T')) {
-      // "2025-05-23T13:08:25Z" 와 같은 ISO 8601 문자열 처리
-      createDateToPass = joinDateValue.split('T').first;
-      print('DEBUG (MainNavigation build): joinDateValue is ISO String. createDateToPass: $createDateToPass');
-    } else if (joinDateValue is String) {
-      // "2025-05-23" 와 같이 이미 날짜 문자열인 경우
-      createDateToPass = joinDateValue;
-      print('DEBUG (MainNavigation build): joinDateValue is simple String. createDateToPass: $createDateToPass');
-    } else {
-      // joinDate도 없고, loginDate도 없는 경우 (이전 로컬 저장소에서 loginDate를 사용했을 수 있음)
-      createDateToPass = (_loginInfo['loginDate']?.toString().split('T').first) ?? '알 수 없음';
-      print('DEBUG (MainNavigation build): joinDateValue is unknown. createDateToPass: $createDateToPass');
-    }
-    print('DEBUG (MainNavigation build): Final createDateToPass: $createDateToPass');
-
-
-    final settingPage = UserSettingPage(
-      email: _loginInfo['email']?.toString() ?? '알 수 없음', // dynamic에서 String으로 변환
-      userUid: _loginInfo['uid']?.toString() ?? '알 수 없음', // dynamic에서 String으로 변환
-      createDate: createDateToPass, // 가공된 날짜 전달
-      themeColor: _themeColor,
-      insectCount: _insectCount, // ⭐ _insectCount 사용
-      onLogout: () async {
-        if (_isGuest) {
-          await clearLoginInfo(guest: true); // 게스트 로그인 정보 클리어
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginPage()));
-        } else {
-          await clearLoginInfo(guest: false); // 일반 사용자 로그인 정보 클리어
-          await FirebaseAuth.instance.signOut(); // Firebase 로그아웃
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginPage()));
-        }
-      },
-      userData: _loginInfo, // Map<String, dynamic> 그대로 전달
-      refreshUserData: _refreshUserData, // 데이터 새로고침 함수 전달
-    );
+    final createDateToPass = formatJoinDate(_loginInfo['joinDate']);
 
     final pages = [
-      CameraPage(themeColor: _themeColor, onPhotoTaken: _loadImages),
+      CameraPage(themeColor: _themeColor, onPhotoTaken: () {
+        _loadImages();
+        _loadAllUserData();
+      }),
       CollectionPage(
         themeColor: _themeColor,
         images: _images,
         previewColumns: _previewColumns,
         onPreviewSetting: () => _showPreviewSettingSheet(context),
-        onImageDeleted: _loadImages,
+        onImageDeleted: () {
+          _loadImages();
+          _loadAllUserData();
+        },
       ),
       SearchPage(themeColor: _themeColor),
-      const SizedBox(), // 게임 페이지는 따로 열림
-      settingPage,
+      const SizedBox(),
+      UserSettingPage(
+        email: _loginInfo['email']?.toString() ?? '알 수 없음',
+        userUid: _loginInfo['uid']?.toString() ?? '알 수 없음',
+        createDate: createDateToPass,
+        insectCount: _insectCount,
+        themeColor: _themeColor,
+        onLogout: _onLogout,
+        userData: _loginInfo,
+        refreshUserData: _loadAllUserData,
+      ),
     ];
 
     return Scaffold(
@@ -352,8 +282,8 @@ class _MainNavigationState extends State<MainNavigation> {
       builder: (_) => Container(
         padding: const EdgeInsets.all(16),
         child: Wrap(
-          spacing: 10, // 버튼 간의 가로 간격
-          runSpacing: 10, // 줄 간의 세로 간격
+          spacing: 10,
+          runSpacing: 10,
           children: List.generate(6, (index) => index + 1).map((num) {
             return ElevatedButton(
               onPressed: () {
