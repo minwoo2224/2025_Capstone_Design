@@ -24,17 +24,32 @@ class _InsectPageState extends State<InsectPage> {
 
   Future<void> _loadInsects() async {
     final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/insect_data.json');
+    final photoDir = Directory('${dir.path}/insect_photos');
 
-    if (await file.exists()) {
-      final content = await file.readAsString();
-      if (content.isNotEmpty) {
-        final data = jsonDecode(content) as List<dynamic>;
-        final insects = data.cast<Map<String, dynamic>>();
-        setState(() {
-          _insects = insects.reversed.toList();
-        });
+    if (await photoDir.exists()) {
+      final files = photoDir
+          .listSync()
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.json'))
+          .toList();
+
+      List<Map<String, dynamic>> insects = [];
+
+      for (var file in files) {
+        try {
+          final content = await file.readAsString();
+          final data = jsonDecode(content);
+          if (data is Map<String, dynamic>) {
+            insects.add(data);
+          }
+        } catch (_) {
+          // malformed or corrupted file
+        }
       }
+
+      setState(() {
+        _insects = insects.reversed.toList();
+      });
     }
   }
 
@@ -52,17 +67,20 @@ class _InsectPageState extends State<InsectPage> {
   }
 
   void _deleteInsect(Map<String, dynamic> insect) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/insect_data.json');
+    final imageFile = File(insect['image']);
+    if (await imageFile.exists()) {
+      await imageFile.delete();
+    }
+
+    final jsonFilePath = imageFile.path.replaceAll('.jpg', '.json');
+    final jsonFile = File(jsonFilePath);
+    if (await jsonFile.exists()) {
+      await jsonFile.delete();
+    }
 
     setState(() {
       _insects.removeWhere((item) => item['image'] == insect['image']);
     });
-
-    final updatedJson = jsonEncode(_insects.reversed.toList());
-    await file.writeAsString(updatedJson);
-
-    // 이미지 파일은 삭제하지 않음
   }
 
   Widget _buildInsectCard(Map<String, dynamic> insect) {

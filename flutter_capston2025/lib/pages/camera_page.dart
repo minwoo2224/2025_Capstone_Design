@@ -37,7 +37,7 @@ class _CameraPageState extends State<CameraPage> {
       final files = photoDir
           .listSync()
           .whereType<File>()
-          .where((file) => path.basename(file.path).contains("insect_"))
+          .where((file) => path.basename(file.path).contains("insect_") && file.path.endsWith('.jpg'))
           .toList();
       if (files.isNotEmpty) {
         files.sort((a, b) => b.path.compareTo(a.path));
@@ -58,12 +58,13 @@ class _CameraPageState extends State<CameraPage> {
         await photoDir.create(recursive: true);
       }
 
-      final fileName = 'insect_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'insect_$timestamp.jpg';
       final imagePath = '${photoDir.path}/$fileName';
       final newFile = await File(pickedFile.path).copy(imagePath);
 
       final insectData = _generateInsectData(imagePath);
-      await _saveInsectData(insectData);
+      await _saveInsectData(insectData, timestamp);
 
       setState(() {
         _lastImage = newFile;
@@ -91,20 +92,15 @@ class _CameraPageState extends State<CameraPage> {
     };
   }
 
-  Future<void> _saveInsectData(Map<String, dynamic> data) async {
+  Future<void> _saveInsectData(Map<String, dynamic> data, int timestamp) async {
     final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/insect_data.json');
-
-    List<dynamic> existing = [];
-    if (await file.exists()) {
-      final content = await file.readAsString();
-      if (content.isNotEmpty) {
-        existing = jsonDecode(content);
-      }
+    final photoDir = Directory('${dir.path}/insect_photos');
+    if (!await photoDir.exists()) {
+      await photoDir.create(recursive: true);
     }
 
-    existing.add(data);
-    await file.writeAsString(jsonEncode(existing));
+    final file = File('${photoDir.path}/insect_$timestamp.json');
+    await file.writeAsString(jsonEncode(data));
   }
 
   @override
@@ -124,7 +120,7 @@ class _CameraPageState extends State<CameraPage> {
           ),
           if (_lastImage != null)
             Positioned(
-              top: 100, // 필요에 따라 이 값도 조절하여 이미지 위치를 맞출 수 있습니다.
+              top: 100,
               left: 30,
               right: 30,
               child: Container(
@@ -149,19 +145,16 @@ class _CameraPageState extends State<CameraPage> {
               ),
             )
           else
-          // 이곳이 수정된 부분입니다.
             Align(
-              alignment: Alignment.center, // Column 자체를 가운데 정렬
+              alignment: Alignment.center,
               child: Column(
-                mainAxisSize: MainAxisSize.min, // 필요한 만큼만 공간 차지
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
                     "assets/icons/camera_guide.png",
-                    height: 340, // 요청하신 높이로 설정
+                    height: 340,
                   ),
-                  // SizedBox는 이제 필요에 따라 간격을 직접 조절하는 데 사용
-                  const SizedBox(height: 20), // 이미지와 텍스트 사이 간격
-
+                  const SizedBox(height: 20),
                   const Text(
                     '사진을 찍어보세요!!',
                     style: TextStyle(
@@ -176,8 +169,6 @@ class _CameraPageState extends State<CameraPage> {
                       ],
                     ),
                   ),
-                  // 만약 텍스트 아래에도 공간을 주고 싶다면 여기에 SizedBox 추가
-                  // const SizedBox(height: 200), // 이전에 요청하신 200px 간격은 Text 아래에 추가하면 적절할 수 있습니다.
                 ],
               ),
             ),

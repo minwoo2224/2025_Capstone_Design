@@ -33,12 +33,26 @@ class _GalleryPageState extends State<GalleryPage> {
   void initState() {
     super.initState();
     _columns = widget.previewColumns;
-    _images = widget.images;
+    _images = widget.images
+        .where((file) =>
+    file.path.endsWith('.jpg') &&
+        file.existsSync() &&
+        _isValidImage(file))
+        .toList();
 
     // 최신 이미지가 먼저 나오도록 정렬
     _images.sort((a, b) => b.path.compareTo(a.path));
 
     _groupImagesByDate();
+  }
+
+  bool _isValidImage(File file) {
+    try {
+      final bytes = file.readAsBytesSync();
+      return bytes.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 
   void _groupImagesByDate() {
@@ -50,16 +64,10 @@ class _GalleryPageState extends State<GalleryPage> {
         final timestamp = int.parse(timestampStr);
         final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
         final dateKey = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-        if (_groupedImages[dateKey] == null) {
-          _groupedImages[dateKey] = [];
-        }
-        _groupedImages[dateKey]!.add(image);
+        _groupedImages.putIfAbsent(dateKey, () => []).add(image);
       } catch (e) {
         const defaultDate = "Unknown Date";
-        if (_groupedImages[defaultDate] == null) {
-          _groupedImages[defaultDate] = [];
-        }
-        _groupedImages[defaultDate]!.add(image);
+        _groupedImages.putIfAbsent(defaultDate, () => []).add(image);
       }
     }
     _groupedImages = Map.fromEntries(
@@ -149,8 +157,6 @@ class _GalleryPageState extends State<GalleryPage> {
     return Scaffold(
       body: Column(
         children: [
-          //빈 Bar
-          //Container(height: kBottomNavigationBarHeight, color: widget.themeColor),
           Expanded(
             child: _groupedImages.isEmpty
                 ? const Center(child: Text("사진이 없습니다.", style: TextStyle(fontSize: 18)))
@@ -187,7 +193,22 @@ class _GalleryPageState extends State<GalleryPage> {
                       return GestureDetector(
                         onTap: () => _showImageDialog(image),
                         onLongPress: () => _deleteImage(image),
-                        child: Image.file(image, fit: BoxFit.cover),
+                        child: Builder(
+                          builder: (_) {
+                            try {
+                              return Image.file(image, fit: BoxFit.cover);
+                            } catch (e) {
+                              return Container(
+                                color: Colors.red.shade900,
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  'Invalid image',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              );
+                            }
+                          },
+                        ),
                       );
                     },
                   ),

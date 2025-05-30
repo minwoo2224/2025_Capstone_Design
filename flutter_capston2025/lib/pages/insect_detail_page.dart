@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 
 class InsectDetailPage extends StatelessWidget {
   final Map<String, dynamic> insect;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
 
   const InsectDetailPage({
     super.key,
     required this.insect,
-    required this.onDelete,
+    this.onDelete,
   });
 
   String _getIconPath(String type) {
@@ -31,10 +31,19 @@ class InsectDetailPage extends StatelessWidget {
         title: const Text('정말 놓아줍니까?'),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-              onDelete();
+            onPressed: () async {
+              Navigator.of(context).pop(); // AlertDialog 닫기
+              Navigator.of(context).pop(); // BottomSheet 닫기
+
+              final imageFile = File(insect['image']);
+              final jsonFilePath = imageFile.path.replaceAll('.jpg', '.json');
+              final jsonFile = File(jsonFilePath);
+
+              if (await jsonFile.exists()) {
+                await jsonFile.delete();
+              }
+
+              onDelete?.call(); // 필요 시 상위에서 갱신
             },
             child: const Text('예'),
           ),
