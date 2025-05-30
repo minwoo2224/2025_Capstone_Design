@@ -24,77 +24,58 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SocketService.connect();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final guestInfo = await readLoginInfo(guest: true);
   final userInfo = await readLoginInfo(guest: false);
-
   bool isGuest = guestInfo.isNotEmpty;
   bool isLoggedIn = userInfo.isNotEmpty;
+  Map<String, dynamic> actualUserInfo = {};
 
-  // Firebase에서 실제 사용자 데이터를 불러오는 로직 추가
-  Map<String, dynamic> actualUserInfo = {}; // ⭐ Map<String, dynamic>으로 변경
-  if (isLoggedIn && userInfo.containsKey('uid')) {
+  if (isLoggedIn && userInfo.containsKey('uid') && userInfo['uid'] != 'guest_uid') {
     try {
-      final userUid = userInfo['uid']!.toString(); // dynamic 타입에서 String으로 변환
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userUid).get();
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userInfo['uid'])
+          .get();
       if (userDoc.exists && userDoc.data() != null) {
-        actualUserInfo = userDoc.data()!; // Firestore 데이터는 이미 Map<String, dynamic>
-        // Firestore에서 Timestamp로 저장된 경우, 이를 String으로 변환하여 저장
+        actualUserInfo = userDoc.data()!;
         if (actualUserInfo['joinDate'] is Timestamp) {
-          actualUserInfo['joinDate'] = (actualUserInfo['joinDate'] as Timestamp).toDate().toIso8601String();
+          actualUserInfo['joinDate'] =
+              (actualUserInfo['joinDate'] as Timestamp).toDate().toIso8601String();
         }
-        // 필수 필드가 없는 경우 기본값 부여 (견고한 앱을 위해 중요)
         actualUserInfo['email'] ??= userInfo['email'] ?? '';
-        actualUserInfo['uid'] ??= userUid;
+        actualUserInfo['uid'] ??= userInfo['uid'];
         actualUserInfo['joinDate'] ??= DateTime.now().toIso8601String();
-        actualUserInfo['insectCount'] ??= 0; // int 타입으로 유지
+        actualUserInfo['insectCount'] ??= 0;
         actualUserInfo['userNumber'] ??= '000000';
-      } else {
-        // Firebase에 사용자 문서가 없는 경우, 로컬 정보만 사용하고 기본값 설정
-        actualUserInfo = userInfo;
-        actualUserInfo['email'] ??= userInfo['email'] ?? '';
-        actualUserInfo['uid'] ??= userUid;
-        actualUserInfo['joinDate'] ??= DateTime.now().toIso8601String();
-        actualUserInfo['insectCount'] ??= 0; // int 타입으로 유지
-        actualUserInfo['userNumber'] ??= '000000';
-        print("경고: 로그인된 사용자이나 Firestore에 문서가 없습니다.");
+        actualUserInfo['nickname'] ??= '이름없는벌레';
       }
-    } catch (e) {
-      print("Firebase 사용자 정보 로드 중 오류 발생: $e");
-      // 오류 발생 시 로컬 정보 사용하고 기본값 설정
+    } catch (_) {
       actualUserInfo = userInfo;
-      actualUserInfo['email'] ??= userInfo['email'] ?? '';
-      actualUserInfo['uid'] ??= userInfo['uid'] ?? '';
-      actualUserInfo['joinDate'] ??= DateTime.now().toIso8601String();
-      actualUserInfo['insectCount'] ??= 0; // int 타입으로 유지
-      actualUserInfo['userNumber'] ??= '000000';
     }
   } else {
-    // 로그인 안 되어있거나 UID 없는 경우에도 기본값 설정
-    actualUserInfo = userInfo; // 로컬 userInfo가 Map<String, dynamic>이므로 그대로 사용
+    actualUserInfo = userInfo;
     actualUserInfo['email'] ??= '';
     actualUserInfo['uid'] ??= '';
     actualUserInfo['joinDate'] ??= DateTime.now().toIso8601String();
-    actualUserInfo['insectCount'] ??= 0; // int 타입으로 유지
+    actualUserInfo['insectCount'] ??= 0;
     actualUserInfo['userNumber'] ??= '000000';
   }
 
   runApp(MyApp(
     isGuest: isGuest,
     isLoggedIn: isLoggedIn,
-    guestInfo: guestInfo, // readLoginInfo에서 Map<String, dynamic>을 반환하므로 OK
-    userInfo: actualUserInfo, // Firebase에서 불러온 실제 사용자 정보 전달
+    guestInfo: guestInfo,
+    userInfo: actualUserInfo,
   ));
 }
 
 class MyApp extends StatelessWidget {
   final bool isGuest;
   final bool isLoggedIn;
-  final Map<String, dynamic> guestInfo; // ⭐ Map<String, dynamic>으로 변경
-  final Map<String, dynamic> userInfo; // ⭐ Map<String, dynamic>으로 변경
+  final Map<String, dynamic> guestInfo;
+  final Map<String, dynamic> userInfo;
 
   const MyApp({
     super.key,
@@ -113,7 +94,7 @@ class MyApp extends StatelessWidget {
       home: isGuest
           ? MainNavigation(isGuest: true, selectedIndex: 4, loginInfo: guestInfo)
           : isLoggedIn
-          ? MainNavigation(isGuest: false, selectedIndex: 4, loginInfo: userInfo) // 실제 사용자 정보 전달
+          ? MainNavigation(isGuest: false, selectedIndex: 4, loginInfo: userInfo)
           : const LoginPage(),
     );
   }
