@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -46,13 +45,13 @@ ThemeData buildGameTheme() {
       ),
     ),
     cardColor: Colors.deepPurple.shade900.withOpacity(0.9),
-    cardTheme: CardTheme(
+    cardTheme: const CardThemeData(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-        side: BorderSide(color: Colors.amber.shade200, width: 1.5),
+        borderRadius: BorderRadius.all(Radius.circular(15)),
+        side: BorderSide(color: Color(0xFFFFECB3), width: 1.5),
       ),
       elevation: 8,
-      margin: const EdgeInsets.all(10),
+      margin: EdgeInsets.all(10),
     ),
   );
 }

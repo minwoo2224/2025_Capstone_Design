@@ -177,7 +177,7 @@ class _LoginFormState extends State<LoginForm> {
       'uid': 'guest_uid',
       'loginDate': DateTime.now().toIso8601String(),
       'insectCount': '0',
-      'userNumber': 'GUEST0',
+      'userNumber': 'GUEST-000000',
       'joinDate': DateTime.now().toIso8601String(),
       'nickname': '게스트',
     }, guest: true);
@@ -195,7 +195,7 @@ class _LoginFormState extends State<LoginForm> {
             'uid': 'guest_uid',
             'loginDate': DateTime.now().toIso8601String(),
             'insectCount': '0',
-            'userNumber': 'GUEST0',
+            'userNumber': 'GUEST-000000',
             'joinDate': DateTime.now().toIso8601String(),
             'nickname': '게스트',
           },
