@@ -104,6 +104,12 @@
         socket.on("cardsInfo", (cardsdata) => {
             console.log(cardsdata);
         });
+        socket.on("critical", (msg) => {
+            alert(msg);
+        });
+        socket.on("miss", (msg) => {
+            alert(msg);
+        });
     </script>
 </body>
 </html>

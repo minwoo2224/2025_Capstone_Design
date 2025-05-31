@@ -98,7 +98,7 @@ io.on("connection", (socket) => {
     });
 
     //disconnect logic
-    //수정
+    //수정 할 듯
     socket.on("disconnect", () => {
         console.log("Disconnected: ", socket.id);
         const roomId = players[socket.id]?.roomId;

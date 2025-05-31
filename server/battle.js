@@ -32,8 +32,27 @@ async function battle(player1, player2, callback) {
         if (!attacker.socket.connected || !defender.socket.connected) {
             break;
         }
-        // 공격 계산
-        const damage = Math.max(0, attacker.attack - defender.defend);
+        var critical = Math.random();
+        critical.toFixed(1);
+        var miss = Math.random();
+        miss.toFixed(1);
+        console.log(`${critical}, ${miss}`);
+
+        // 공격 계산 => critical + miss logic
+        damage = Math.max(0, attacker.attack - defender.defend);
+        if ((1 - critical) <= 0.1) {
+            damage *= 1.3;
+            console.log(damage);
+            attacker.socket.emit("critical", "critical!");
+            defender.socket.emit("critical", "critical!");
+        }
+        if ((1 - miss) <= 0.1) {
+            damage = 0;
+            console.log(damage);
+            attacker.socket.emit("miss", "miss!");
+            defender.socket.emit("miss", "miss!");
+        }
+
         defender.hp -= damage;
 
         // 상태 전송 (각 플레이어에게 서로의 상태 전달)
