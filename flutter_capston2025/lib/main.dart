@@ -17,6 +17,7 @@ import 'storage/login_storage.dart';
 import 'utils/load_all_cards.dart';
 import 'socket/socket_service.dart';
 import 'services/camera_service.dart';
+import 'widgets/guide_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -249,13 +250,30 @@ class _MainNavigationState extends State<MainNavigation> {
         offset: const Offset(0, 8),
         child: GestureDetector(
           onTap: () async {
-            await captureAndSavePhoto(
-              context: context,
-              onCompleted: () {
-                _loadImages();
-                _loadAllUserData();
-              },
-            );
+            final prefs = await SharedPreferences.getInstance();
+            final skipGuide = prefs.getBool('skipGuide') ?? false;
+
+            bool shouldContinue = true;
+            if (!skipGuide) {
+              shouldContinue = await showDialog<bool>(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => GuideDialog(
+                  onComplete: () {}, // 또는 실제 작업이 필요하면 여기에 함수 작성
+                ),
+              ) ??
+                  false;
+            }
+
+            if (shouldContinue) {
+              await captureAndSavePhoto(
+                context: context,
+                onCompleted: () {
+                  _loadImages();
+                  _loadAllUserData();
+                },
+              );
+            }
           },
           child: Container(
             width: 66,
@@ -268,7 +286,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 BoxShadow(
                   color: Colors.black.withOpacity(0.3),
                   blurRadius: 6,
-                  offset: Offset(0, 3),
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -312,7 +330,7 @@ class _MainNavigationState extends State<MainNavigation> {
               label,
               style: TextStyle(
                 color: isSelected ? _themeColor : Colors.grey,
-                fontSize: 10, // 기본값보다 작게
+                fontSize: 10,
               ),
             ),
           ],

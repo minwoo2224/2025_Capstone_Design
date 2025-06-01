@@ -40,6 +40,7 @@ flutter:
     - assets/images/collection_page/
     - assets/images/family_detail_page/
     - assets/images/cards/
+    - assets/images/guides/
     - assets/images/BugStrike_user_images.png
     - assets/images/collection_page/insect1.png
     - assets/images/collection_page/insect2.png
@@ -68,6 +69,8 @@ flutter:
     - assets/icons/rock.png
     - assets/icons/scissors.png
     - assets/icons/paper.png
+    - assets/images/guides/guide1.png
+    - assets/images/guides/guide2.png
 
 
   # assets:
