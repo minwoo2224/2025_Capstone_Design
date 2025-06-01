@@ -7,7 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:path/path.dart' as path;
 
-import 'pages/camera_page.dart';
 import 'pages/collection_page.dart';
 import 'pages/search_page.dart';
 import 'pages/login_page.dart';
@@ -17,13 +16,11 @@ import 'firebase/firebase_options.dart';
 import 'storage/login_storage.dart';
 import 'utils/load_all_cards.dart';
 import 'socket/socket_service.dart';
+import 'services/camera_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // ✅ 소켓 초기화
   SocketService.connect();
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final guestInfo = await readLoginInfo(guest: true);
@@ -117,7 +114,6 @@ class _MainNavigationState extends State<MainNavigation> {
           if (info['joinDate'] is Timestamp) {
             info['joinDate'] = (info['joinDate'] as Timestamp).toDate().toIso8601String();
           }
-
           final prefs = await SharedPreferences.getInstance();
           if (info.containsKey('nickname')) {
             prefs.setString('nickname', info['nickname'].toString());
@@ -220,19 +216,8 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loginInfo.isEmpty && !_isGuest) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     final createDateToPass = formatJoinDate(_loginInfo['joinDate']);
-
     final pages = [
-      CameraPage(themeColor: _themeColor, onPhotoTaken: () {
-        _loadImages();
-        _loadAllUserData();
-      }),
       CollectionPage(
         themeColor: _themeColor,
         images: _images,
@@ -244,6 +229,7 @@ class _MainNavigationState extends State<MainNavigation> {
         },
       ),
       SearchPage(themeColor: _themeColor),
+      const SizedBox(),
       const SizedBox(),
       UserSettingPage(
         email: _loginInfo['email']?.toString() ?? '알 수 없음',
@@ -259,19 +245,78 @@ class _MainNavigationState extends State<MainNavigation> {
 
     return Scaffold(
       body: pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        selectedItemColor: _themeColor,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: '촬영'),
-          BottomNavigationBarItem(icon: Icon(Icons.bug_report), label: '곤충'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: '검색'),
-          BottomNavigationBarItem(icon: Icon(Icons.sports_kabaddi), label: '게임'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
-        ],
+      floatingActionButton: Transform.translate(
+        offset: const Offset(0, 8),
+        child: GestureDetector(
+          onTap: () async {
+            await captureAndSavePhoto(
+              context: context,
+              onCompleted: () {
+                _loadImages();
+                _loadAllUserData();
+              },
+            );
+          },
+          child: Container(
+            width: 66,
+            height: 66,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.redAccent,
+              border: Border.all(color: Colors.black, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 6,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.camera_alt, color: Colors.white),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 6.0,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildTabItem(index: 0, icon: Icons.bug_report, label: '곤충'),
+            _buildTabItem(index: 1, icon: Icons.search, label: '검색'),
+            const SizedBox(width: 48),
+            _buildTabItem(index: 3, icon: Icons.sports_kabaddi, label: '게임'),
+            _buildTabItem(index: 4, icon: Icons.settings, label: '설정'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabItem({
+    required int index,
+    required IconData icon,
+    required String label,
+  }) {
+    final isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () => _onItemTapped(index),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: isSelected ? _themeColor : Colors.grey),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? _themeColor : Colors.grey,
+                fontSize: 10, // 기본값보다 작게
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
