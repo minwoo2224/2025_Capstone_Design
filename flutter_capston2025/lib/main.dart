@@ -13,12 +13,18 @@ import 'pages/login_page.dart';
 import 'pages/user_setting_page.dart';
 import 'pages/game_page.dart';
 import 'pages/loading_page.dart';
+import 'pages/title_page.dart';
 import 'firebase/firebase_options.dart';
 import 'storage/login_storage.dart';
 import 'utils/load_all_cards.dart';
 import 'socket/socket_service.dart';
 import 'services/camera_service.dart';
 import 'widgets/guide_dialog.dart';
+
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase/firebase_options.dart';
+import 'socket/socket_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,32 +38,11 @@ void main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  final guestInfo = await readLoginInfo(guest: true);
-  final userInfo = await readLoginInfo(guest: false);
-  bool isGuest = guestInfo.isNotEmpty;
-  bool isLoggedIn = userInfo.isNotEmpty;
-
-  runApp(MyApp(
-    isGuest: isGuest,
-    isLoggedIn: isLoggedIn,
-    guestInfo: guestInfo,
-    userInfo: userInfo,
-  ));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final bool isGuest;
-  final bool isLoggedIn;
-  final Map<String, dynamic> guestInfo;
-  final Map<String, dynamic> userInfo;
-
-  const MyApp({
-    super.key,
-    required this.isGuest,
-    required this.isLoggedIn,
-    required this.guestInfo,
-    required this.userInfo,
-  });
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -65,11 +50,7 @@ class MyApp extends StatelessWidget {
       title: '곤충 도감 앱',
       theme: ThemeData.dark(),
       debugShowCheckedModeBanner: false,
-      home: isGuest
-          ? MainNavigation(isGuest: true, selectedIndex: 4, loginInfo: guestInfo)
-          : isLoggedIn
-          ? MainNavigation(isGuest: false, selectedIndex: 4, loginInfo: userInfo)
-          : const LoginPage(),
+      home: const TitleScreen(), // 타이틀 화면으로 시작
     );
   }
 }
