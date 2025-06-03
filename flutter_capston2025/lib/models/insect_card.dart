@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
@@ -12,7 +11,7 @@ class InsectCard {
   final double critical;
   final double evasion;
   final String order;
-  final String image; // **이미지 추가 상단 필드에 추가
+  final String image;
 
   InsectCard({
     required this.name,
@@ -24,18 +23,8 @@ class InsectCard {
     required this.critical,
     required this.evasion,
     required this.order,
-    required this.image, // **이미지 추가
+    required this.image,
   });
-  Map<String, dynamic> toServerJson() {
-    return {
-      'name': name,
-      'type': type,
-      'attack': attack,
-      'defense': defense,
-      'health': health,
-      'speed': speed,
-    };
-  }
 
   factory InsectCard.fromJson(Map<String, dynamic> json) {
     return InsectCard(
@@ -48,7 +37,7 @@ class InsectCard {
       critical: (json['critical'] as num).toDouble(),
       evasion: (json['evasion'] as num).toDouble(),
       order: json['order'],
-      image: json['image'], // **이미지 추가
+      image: json['image'],
     );
   }
 
@@ -64,20 +53,32 @@ class InsectCard {
     'order': order,
     'image': image,
   };
+
+  Map<String, dynamic> toServerJson() => {
+    'name': name,
+    'type': type,
+    'attack': attack,
+    'defense': defense,
+    'health': health,
+    'speed': speed,
+  };
 }
 
+/// assets/cards 폴더 내 모든 JSON 카드 파일을 자동으로 로딩
 Future<List<InsectCard>> loadInsectCards() async {
-  final List<String> filenames = [
-    'assets/cards/가위곤충.json',
-    'assets/cards/바위곤충.json',
-    'assets/cards/보곤충.json',
-  ];
+  final manifestContent = await rootBundle.loadString('AssetManifest.json');
+  final Map<String, dynamic> manifestMap = jsonDecode(manifestContent);
+
+  final cardPaths = manifestMap.keys
+      .where((path) =>
+  path.startsWith('assets/cards/') && path.endsWith('.json'))
+      .toList();
 
   List<InsectCard> cards = [];
 
-  for (String path in filenames) {
-    String data = await rootBundle.loadString(path);
-    final jsonMap = jsonDecode(data);
+  for (String path in cardPaths) {
+    final jsonString = await rootBundle.loadString(path);
+    final jsonMap = jsonDecode(jsonString);
     cards.add(InsectCard.fromJson(jsonMap));
   }
 

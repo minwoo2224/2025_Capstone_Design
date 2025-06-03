@@ -12,6 +12,7 @@ import 'pages/search_page.dart';
 import 'pages/login_page.dart';
 import 'pages/user_setting_page.dart';
 import 'pages/game_page.dart';
+import 'pages/loading_page.dart';
 import 'firebase/firebase_options.dart';
 import 'storage/login_storage.dart';
 import 'utils/load_all_cards.dart';
@@ -21,7 +22,14 @@ import 'widgets/guide_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SocketService.connect();
+  SocketService.connect(
+    onCardsReceived: (_) {},  // 카드 수신 처리 없음
+    onMatched: () {},         // 매칭 성공 처리 없음
+    onConnected: () {},       // ✅ 추가된 필수 파라미터
+  );
+
+
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final guestInfo = await readLoginInfo(guest: true);
@@ -167,20 +175,12 @@ class _MainNavigationState extends State<MainNavigation> {
 
   void _onItemTapped(int index) async {
     if (index == 3) {
-      final allCards = await loadAllCards();
-      if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => GamePage(
-              userUid: _loginInfo['uid']?.toString() ?? 'guest_uid',
-              playerCards: allCards,
-              opponentCards: [],
-              themeColor: _themeColor,
-            ),
-          ),
-        );
-      }
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const LoadingPage(),
+        ),
+      );
       return;
     }
     setState(() {
