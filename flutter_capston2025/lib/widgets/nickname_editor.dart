@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_capston2025/utils/nickname_utils.dart';
 import 'package:flutter_capston2025/utils/nickname_words.dart';
 import 'package:flutter_capston2025/services/user_service.dart';
+import '../storage/login_storage.dart';
 
 class NicknameEditor extends StatefulWidget {
   final bool isGuest;
@@ -31,8 +32,15 @@ class _NicknameEditorState extends State<NicknameEditor> {
   @override
   void initState() {
     super.initState();
-    _controller.text = widget.initialNickname;
+    _loadNickname();
     _checkEditAvailability();
+  }
+
+  void _loadNickname() async {
+    final nickname = await readNicknameFromTxt(guest: widget.isGuest);
+    setState(() {
+      _controller.text = nickname.isNotEmpty ? nickname : widget.initialNickname;
+    });
   }
 
   void _checkEditAvailability() async {
@@ -60,17 +68,14 @@ class _NicknameEditorState extends State<NicknameEditor> {
       setState(() => _status = '비회원은 닉네임 변경이 불가능 합니다.');
       return;
     }
-
     if (nickname.isEmpty) {
       setState(() => _status = '닉네임을 입력해주세요.');
       return;
     }
-
     if (_countKoreanChars(nickname) > 8) {
       setState(() => _status = '닉네임은 한글 기준 8자 이하만 가능합니다.');
       return;
     }
-
     if (!_canEdit) {
       setState(() => _status = '닉네임은 하루에 한 번만 수정 가능합니다.');
       return;
@@ -79,10 +84,14 @@ class _NicknameEditorState extends State<NicknameEditor> {
     try {
       await updateNickname(widget.userUid, nickname);
       await markNicknameEditedToday();
+      await saveNicknameToTxt(nickname, guest: widget.isGuest); // 🔥 변경 즉시 txt 저장
+
       setState(() {
+        _controller.text = nickname;
         _status = '닉네임이 성공적으로 변경되었습니다.';
         _canEdit = false;
       });
+
       widget.refreshUserData?.call();
     } catch (e) {
       setState(() => _status = '닉네임 변경 실패: $e');

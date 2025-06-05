@@ -42,7 +42,8 @@ flutter:
     - assets/images/cards/
     - assets/images/guides/
     - assets/images/title/
-    - assets/images/BugStrike_user_images.png
+    - assets/images/User_sex/BugStrike_user_images_male.png
+    - assets/images/User_sex/BugStrike_user_images_female.png
     - assets/images/collection_page/insect1.png
     - assets/images/collection_page/insect2.png
     - assets/images/collection_page/insect3.png
@@ -68,7 +69,6 @@ flutter:
     - assets/images/family_detail_page/딱정벌레/풍뎅이과/풍뎅이1.jpg
     - assets/images/family_detail_page/벌/꿀벌과/꿀벌1.jpg
     - assets/images/family_detail_page/벌/말벌과/말벌1.jpg
-    - assets/icons/camera_guide.png
     - assets/icons/rock.png
     - assets/icons/scissors.png
     - assets/icons/paper.png

@@ -117,7 +117,15 @@ class _LoginFormState extends State<LoginForm> {
       });
     } catch (e) {
       setState(() {
-        message = '예외 발생: $e';
+        // 네트워크 등 기타 예외 메시지도 한글 안내
+        final err = e.toString();
+        if (err.contains('network') ||
+            err.contains('Network') ||
+            err.contains('SocketException')) {
+          message = '네트워크가 연결되지 않았습니다. 인터넷 연결을 확인해주세요.';
+        } else {
+          message = '알 수 없는 오류가 발생했습니다: $e';
+        }
         isSuccess = false;
       });
     }
@@ -139,9 +147,21 @@ class _LoginFormState extends State<LoginForm> {
         message = '비밀번호 재설정 이메일을 전송했습니다.';
         isSuccess = true;
       });
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        message = getErrorMessage(e.code);
+        isSuccess = false;
+      });
     } catch (e) {
       setState(() {
-        message = '비밀번호 재설정 실패: $e';
+        final err = e.toString();
+        if (err.contains('network') ||
+            err.contains('Network') ||
+            err.contains('SocketException')) {
+          message = '네트워크가 연결되지 않았습니다. 인터넷 연결을 확인해주세요.';
+        } else {
+          message = '알 수 없는 오류가 발생했습니다: $e';
+        }
         isSuccess = false;
       });
     }
@@ -219,8 +239,20 @@ class _LoginFormState extends State<LoginForm> {
         return '비밀번호는 6자 이상이어야 합니다.';
       case 'too-many-requests':
         return '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
+      case 'user-disabled':
+        return '해당 계정이 비활성화되었습니다.';
+      case 'operation-not-allowed':
+        return '이메일/비밀번호 로그인이 허용되어 있지 않습니다.';
+      case 'network-request-failed':
+        return '네트워크가 연결되지 않았습니다. 인터넷 연결을 확인해주세요.';
+      case 'invalid-credential':
+        return '로그인 정보가 유효하지 않습니다.';
+      case 'internal-error':
+        return '서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      case 'account-exists-with-different-credential':
+        return '다른 로그인 방법으로 이미 가입된 계정입니다.';
       default:
-        return '오류 발생: $code';
+        return '알 수 없는 오류가 발생했습니다: $code';
     }
   }
 

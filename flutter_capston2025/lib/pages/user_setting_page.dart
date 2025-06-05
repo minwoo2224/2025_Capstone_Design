@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_capston2025/widgets/nickname_editor.dart';
 
-class UserSettingPage extends StatelessWidget {
+class UserSettingPage extends StatefulWidget {
   final String email;
   final String userUid;
   final String createDate;
@@ -24,16 +24,48 @@ class UserSettingPage extends StatelessWidget {
   });
 
   @override
+  State<UserSettingPage> createState() => _UserSettingPageState();
+}
+
+class _UserSettingPageState extends State<UserSettingPage> {
+  bool _isMale = true; // 남자(기본값), false면 여자
+
+  @override
   Widget build(BuildContext context) {
-    final isGuest = email.toLowerCase() == 'guest@example.com';
-    final displayUserNumber = userData?['userNumber']?.toString() ?? '알 수 없음';
+    final isGuest = widget.email.toLowerCase() == 'guest@example.com';
+    final displayUserNumber = widget.userData?['userNumber']?.toString() ?? '알 수 없음';
+
+    // 성별에 따라 이미지 경로를 다르게
+    final userImage = _isMale
+        ? 'assets/images/User_sex/BugStrike_user_images_male.png'
+        : 'assets/images/User_sex/BugStrike_user_images_female.png';
 
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text("설정"),
-        backgroundColor: themeColor,
+        backgroundColor: widget.themeColor,
         centerTitle: true,
+        actions: [
+          // 오른쪽에 남녀 토글
+          Row(
+            children: [
+              const Text("남", style: TextStyle(color: Colors.white, fontSize: 15)),
+              Switch(
+                value: !_isMale, // true면 여자로 토글
+                activeColor: Colors.pinkAccent,
+                inactiveThumbColor: Colors.blue,
+                onChanged: (v) {
+                  setState(() {
+                    _isMale = !v; // false면 남자, true면 여자
+                  });
+                },
+              ),
+              const Text("여", style: TextStyle(color: Colors.white, fontSize: 15)),
+              const SizedBox(width: 8),
+            ],
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -43,7 +75,7 @@ class UserSettingPage extends StatelessWidget {
               const SizedBox(height: 30),
               SizedBox(
                 height: 340,
-                child: Image.asset('assets/images/BugStrike_user_images.png', fit: BoxFit.contain),
+                child: Image.asset(userImage, fit: BoxFit.contain),
               ),
               const SizedBox(height: 10),
               if (isGuest)
@@ -52,9 +84,9 @@ class UserSettingPage extends StatelessWidget {
               const SizedBox(height: 10),
               NicknameEditor(
                 isGuest: isGuest,
-                userUid: userUid,
-                initialNickname: userData?['nickname']?.toString() ?? '',
-                refreshUserData: refreshUserData,
+                userUid: widget.userUid,
+                initialNickname: widget.userData?['nickname']?.toString() ?? '',
+                refreshUserData: widget.refreshUserData,
               ),
               Card(
                 color: Colors.white12,
@@ -65,13 +97,13 @@ class UserSettingPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _infoRow("이메일", email),
+                      _infoRow("이메일", widget.email),
                       const SizedBox(height: 10),
                       _infoRow("회원 번호", displayUserNumber),
                       const SizedBox(height: 10),
-                      _infoRow("계정 생성일", createDate),
+                      _infoRow("계정 생성일", widget.createDate),
                       const SizedBox(height: 10),
-                      _infoRow("잡은 곤충 개수", "$insectCount개"),
+                      _infoRow("잡은 곤충 개수", "${widget.insectCount}개"),
                     ],
                   ),
                 ),
@@ -79,7 +111,7 @@ class UserSettingPage extends StatelessWidget {
               const SizedBox(height: 30),
               Center(
                 child: ElevatedButton(
-                  onPressed: onLogout,
+                  onPressed: widget.onLogout,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent,
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),

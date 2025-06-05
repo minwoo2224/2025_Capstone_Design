@@ -151,7 +151,7 @@ class _CameraPageState extends State<CameraPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
-                    "assets/icons/camera_guide.png",
+                    "assets/icons/BugStrike_user_images_female.png",
                     height: 340,
                   ),
                   const SizedBox(height: 20),
