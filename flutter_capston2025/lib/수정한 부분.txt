@@ -1,21 +1,15 @@
-1. card_selection_page.dart 파일 수정
-'선택 완료' 버튼 누르면 서버에 카드 3장이랑 고유 UID를 서버로 보내는 식으로 변경
-
-2. insect_card.dart
-곤충 카드의 스텟 중에서 passive 삭제
-스텟에서 passive 삭제에 따라 json파일에도 다 삭제
-
-3. dirctionary_page.dart
-도감에 있는 카드를 card_selection_page.dart에 전달하도록 수정
-전에는 비동기적으로 하드 코딩 방법이었음.
-아마도 별 문제는 없을 듯
-
-4. game_page.dart
-서버와 socketIO 이용해서 통신하는 기능 추가
-
-5. lib/utils/load_all_cards.dart
-하드코딩 없이 모든 .json 파일을 자동으로 불러오기 위한 파일
-아직 미완성
+GIF 파일은 flutter에서 오류가 많음
+-> 그래서 json 파일로 변경
+변경 방법 :
+https://lottiefiles.com/ 여기서 MP4 파일을 JSON 파일로 변환
+- Go to Dashboard 클릭
+- 왼쪽 상단에 upload animations 클릭
+- video & image to Lotties 클릭
+- Browse 눌러서 GIF 파일 선택
+- 오른쪽에 Lottie.JSON 클릭
+- 다운받고 그 JSON 파일 이용하면 끝
+(loading_character_male.json 파일은 배경에 흰색 제거하고,
+loading_character_female.json 파일은 만들면 진행)
 
 추후에 해야하는 것
 1. dictionary_page.dart

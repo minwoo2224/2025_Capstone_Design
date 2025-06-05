@@ -1,64 +1,60 @@
 import 'dart:convert';
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:lottie/lottie.dart';
 import '../models/insect_card.dart';
 import '../socket/socket_service.dart';
 import 'card_selection_page.dart';
 
 class LoadingPage extends StatefulWidget {
-  const LoadingPage({Key? key}) : super(key: key);
+  final bool isMale;
+  const LoadingPage({Key? key, required this.isMale}) : super(key: key);
 
   @override
   State<LoadingPage> createState() => _LoadingPageState();
 }
 
-class _LoadingPageState extends State<LoadingPage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _translateAnimation;
+class _LoadingPageState extends State<LoadingPage> {
+  late Future<void> _initFuture;
 
   @override
   void initState() {
     super.initState();
-
-    _controller = AnimationController(
-      duration: const Duration(seconds: 6),
-      vsync: this,
-    )..repeat();
-
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.35).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.linear),
-    );
-
-    _translateAnimation = Tween<double>(begin: 0.0, end: -60.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.linear),
-    );
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
+    _initFuture = _initializeWithMinimumDelay();
   }
 
-  Future<void> _initialize() async {
-    try {
-      final cards = await _loadAllCardsFromAssets();
+  Future<void> _initializeWithMinimumDelay() async {
+    final stopwatch = Stopwatch()..start();
 
-      SocketService.connect(
-        onConnected: () {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CardSelectionPage(allCards: cards),
-            ),
-          );
-        },
-        onCardsReceived: (_) {},
-        onMatched: () {},
-      );
-    } catch (e) {
-      print('카드 로딩 실패: $e');
-      // TODO: 사용자에게 오류 알림 UI 또는 재시도 버튼 구현 고려
-    }
+    final cards = await _loadAllCardsFromAssets();
+    bool isConnected = false;
+
+    final completer = Completer<void>();
+
+    SocketService.connect(
+      onConnected: () {
+        isConnected = true;
+        completer.complete();
+      },
+      onCardsReceived: (_) {},
+      onMatched: () {},
+    );
+
+    await Future.wait([
+      completer.future,
+      Future.delayed(const Duration(seconds: 3)),
+    ]);
+
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CardSelectionPage(allCards: cards),
+      ),
+    );
   }
 
   Future<List<InsectCard>> _loadAllCardsFromAssets() async {
@@ -81,92 +77,67 @@ class _LoadingPageState extends State<LoadingPage>
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    final lottiePath = widget.isMale
+        ? 'assets/images/User_sex/loading_character_male.json'
+        : 'assets/images/User_sex/loading_character_female.json';
 
     return Scaffold(
-      body: AnimatedBuilder(
-        animation: _controller,
-        builder: (_, __) {
-          double verticalShake = math.sin(_controller.value * 2 * math.pi) * 10;
-          const int treeCount = 3;
-          List<Widget> animatedTrees = [];
-
-          for (int i = 0; i < treeCount; i++) {
-            double phase = (_controller.value + i * 0.33) % 1.0;
-            double treeLeft = screenWidth * 0.1 - (phase * screenWidth * 0.9);
-            double treeRight = screenWidth * 0.1 - (phase * screenWidth * 0.9);
-            double treeScale = 1.5 + phase * 3.5;
-
-            animatedTrees.add(Positioned(
-              top: screenHeight * 0.4,
-              left: treeLeft,
-              child: Transform.scale(
-                scale: treeScale,
-                child: Image.asset(
-                  'assets/images/background/loading_tree1.png',
-                  width: 120,
-                  opacity: const AlwaysStoppedAnimation(1),
-                ),
-              ),
-            ));
-
-            animatedTrees.add(Positioned(
-              top: screenHeight * 0.4,
-              right: treeRight,
-              child: Transform.scale(
-                scale: treeScale,
-                child: Image.asset(
-                  'assets/images/background/loading_tree1.png',
-                  width: 130,
-                  opacity: const AlwaysStoppedAnimation(1),
-                ),
-              ),
-            ));
-          }
-
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: Transform(
-                  alignment: const Alignment(0.0, -0.25),
-                  transform: Matrix4.identity()
-                    ..translate(0.0, _translateAnimation.value + verticalShake)
-                    ..scale(_scaleAnimation.value),
-                  child: Image.asset(
-                    'assets/images/background/loading_background.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              ...animatedTrees,
-              const Center(
-                child: Text(
-                  '서버에 연결 중입니다...',
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background/loading_background.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned(
+            top: screenHeight * 0.4 - 15, // 캐릭터 위치 조정, 낮추려면 +, 높이려면 -
+            left: 0,
+            right: 0,
+            child: Lottie.asset(
+              lottiePath,
+              width: 400,
+              height: 400,
+              fit: BoxFit.contain,
+              repeat: true,
+            ),
+          ),
+          Positioned(
+            bottom: 60,
+            left: 0,
+            right: 0,
+            child: Column(
+              children: const [
+                Text(
+                  'TIP.',
                   style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
                     color: Colors.white,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 8,
-                        color: Colors.black,
-                        offset: Offset(2, 2),
-                      ),
-                    ],
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+                SizedBox(height: 4),
+                Text(
+                  '최대한 많은 곤충을 찍어보세요\n곤충의 능력치는 랜덤으로 부여됩니다.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  '★ LOADING...',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.amber,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

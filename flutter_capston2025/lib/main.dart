@@ -29,15 +29,12 @@ import 'socket/socket_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SocketService.connect(
-    onCardsReceived: (_) {},  // 카드 수신 처리 없음
-    onMatched: () {},         // 매칭 성공 처리 없음
-    onConnected: () {},       // ✅ 추가된 필수 파라미터
+    onCardsReceived: (_) {},
+    onMatched: () {},
+    onConnected: () {},
   );
 
-
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
   runApp(const MyApp());
 }
 
@@ -50,7 +47,7 @@ class MyApp extends StatelessWidget {
       title: '곤충 도감 앱',
       theme: ThemeData.dark(),
       debugShowCheckedModeBanner: false,
-      home: const TitleScreen(), // 타이틀 화면으로 시작
+      home: const TitleScreen(),
     );
   }
 }
@@ -120,6 +117,7 @@ class _MainNavigationState extends State<MainNavigation> {
     info['insectCount'] ??= 0;
     info['userNumber'] ??= '000000';
     info['nickname'] ??= _isGuest ? '게스트' : '이름없는벌레';
+    info['isMale'] ??= true;
 
     setState(() {
       _loginInfo = info;
@@ -159,7 +157,7 @@ class _MainNavigationState extends State<MainNavigation> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => const LoadingPage(),
+          builder: (_) => LoadingPage(isMale: _loginInfo['isMale'] ?? true),
         ),
       );
       return;
@@ -239,9 +237,7 @@ class _MainNavigationState extends State<MainNavigation> {
               shouldContinue = await showDialog<bool>(
                 context: context,
                 barrierDismissible: false,
-                builder: (_) => GuideDialog(
-                  onComplete: () {}, // 또는 실제 작업이 필요하면 여기에 함수 작성
-                ),
+                builder: (_) => GuideDialog(onComplete: () {}),
               ) ??
                   false;
             }
