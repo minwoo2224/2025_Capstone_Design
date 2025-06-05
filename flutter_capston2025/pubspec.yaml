@@ -22,6 +22,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   socket_io_client: ^3.1.2 # 서버 통신을 위한 flutter socket io
   google_fonts: ^6.2.1 #레트로 느낌나는 폰트
+  lottie: ^3.3.1 #GIF 파일 오류 해결용
 
 dev_dependencies:
   flutter_test:
@@ -44,6 +45,7 @@ flutter:
     - assets/images/title/
     - assets/images/User_sex/BugStrike_user_images_male.png
     - assets/images/User_sex/BugStrike_user_images_female.png
+    - assets/images/User_sex/loading_character_male.json
     - assets/images/collection_page/insect1.png
     - assets/images/collection_page/insect2.png
     - assets/images/collection_page/insect3.png
@@ -53,7 +55,6 @@ flutter:
     - assets/images/camera_page/space_bg.png
     - assets/images/background/forest_background.png
     - assets/images/background/loading_background.png
-    - assets/images/background/loading_tree1.png
     - assets/images/family_detail_page/나비/
     - assets/images/family_detail_page/딱정벌레/
     - assets/images/family_detail_page/벌/
