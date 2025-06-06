@@ -1,10 +1,12 @@
+Ôªø// ÏÉÅÌÉúÎ•º Î≥¥Í∏∞ÏúÑÌï¥ ÏΩòÏÜî Î°úÍ∑∏ Î∂ÄÎ∂Ñ Ï∂îÍ∞Ä #pjh ÏàòÏ†ï
 async function battle(player1, player2, callback) {
-    console.log("battle start")
+    console.log("‚öîÔ∏è Battle Start");
+
     const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
     let attacker, defender;
 
-    // º”µµ ∫Ò±≥∑Œ º±∞¯ ∞·¡§
+    // ÏÜçÎèÑ ÎπÑÍµêÎ°ú ÏÑ†Í≥µ Í≤∞Ï†ï
     if (player1.speed >= player2.speed) {
         attacker = player1;
         defender = player2;
@@ -12,6 +14,8 @@ async function battle(player1, player2, callback) {
         attacker = player2;
         defender = player1;
     }
+
+    // Ï¥àÍ∏∞ ÏÉÅÌÉú Ï†ÑÎã¨
     attacker.socket.emit("initialStatus", {
         enemy: defender.name,
         enemyatk: defender.attack,
@@ -27,35 +31,47 @@ async function battle(player1, player2, callback) {
         enemydf: attacker.defend,
         enemyspd: attacker.speed
     });
-    
+
     while (true) {
+        // Ïó∞Í≤∞ ÎÅäÍ∏¥ Í≤ΩÏö∞ Ï¢ÖÎ£å
         if (!attacker.socket.connected || !defender.socket.connected) {
+            console.log("üîå Player disconnected. Battle aborted.");
             break;
         }
-        var critical = Math.random();
-        critical.toFixed(1);
-        var miss = Math.random();
-        miss.toFixed(1);
-        console.log(`${critical}, ${miss}`);
 
-        // ∞¯∞› ∞ËªÍ => critical + miss logic
-        damage = Math.max(0, attacker.attack - defender.defend);
+        const critical = Math.random();
+        const miss = Math.random();
+        console.log(`Rolls - Critical: ${critical.toFixed(2)}, Miss: ${miss.toFixed(2)}`);
+
+        // Í∏∞Î≥∏ Îç∞ÎØ∏ÏßÄ Í≥ÑÏÇ∞
+        let damage = Math.max(0, attacker.attack - defender.defend);
+
         if ((1 - critical) <= 0.1) {
-            damage *= 1.3;
-            console.log(damage);
+            // Îç∞ÎØ∏ÏßÄ Í≥ÑÏÇ∞ÏùÑ ÌôïÏã§Ìûà ÌïòÍ∏∞ ÏúÑÌïú Î∞òÏò¨Î¶º #pjh ÏàòÏ†ï
+            damage = Math.round(damage * 1.3);
+            console.log("üî¥ Critical Hit!", damage);
             attacker.socket.emit("critical", "critical!");
             defender.socket.emit("critical", "critical!");
-        }
-        if ((1 - miss) <= 0.1) {
+        } else if ((1 - miss) <= 0.1) {
             damage = 0;
-            console.log(damage);
+            console.log("‚ö™ Missed!");
             attacker.socket.emit("miss", "miss!");
             defender.socket.emit("miss", "miss!");
+        } else {
+            // ÏùºÎ∞ò Í≥µÍ≤© #pjh ÏàòÏ†ï
+            const normalAttackPayload = {
+                attacker: attacker.name,
+                defender: defender.name,
+                damage: damage
+            };
+            attacker.socket.emit("normalAttack", normalAttackPayload);
+            defender.socket.emit("normalAttack", normalAttackPayload);
         }
 
+        // HP Ï†ÅÏö©
         defender.hp -= damage;
 
-        // ªÛ≈¬ ¿¸º€ (∞¢ «√∑π¿ÃæÓø°∞‘ º≠∑Œ¿« ªÛ≈¬ ¿¸¥ﬁ)
+        // ÏÉÅÌÉú ÏóÖÎç∞Ïù¥Ìä∏ Ï†ÑÏÜ°
         attacker.socket.emit("updateStatus", {
             self: attacker.name,
             enemy: defender.name,
@@ -70,7 +86,7 @@ async function battle(player1, player2, callback) {
             enemyHp: attacker.hp
         });
 
-        // ¡æ∑· ¡∂∞«
+        // ÎùºÏö¥Îìú Ï¢ÖÎ£å Ï°∞Í±¥
         if (defender.hp <= 0) {
             const resultMsg = `${attacker.name} round win!`;
             attacker.socket.emit("updateResult", resultMsg);
@@ -81,14 +97,14 @@ async function battle(player1, player2, callback) {
                 callback(winnerSocketId);
             }
 
-            console.log("round end")
+            console.log("‚úÖ Round Ended");
             break;
         }
 
-        // ≈œ ±≥√º
+        // ÌÑ¥ ÍµêÏ≤¥
         [attacker, defender] = [defender, attacker];
         await delay(1000);
     }
-} 
+}
 
 module.exports = { battle };

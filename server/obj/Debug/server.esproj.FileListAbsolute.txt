@@ -1,1 +1,2 @@
 C:\Users\jomin\2025_Capstone_Design\server\obj\Debug\server.esproj.CoreCompileInputs.cache
+C:\Users\user\Source\Repos\2025_Capstone_Design\server\obj\Debug\server.esproj.CoreCompileInputs.cache

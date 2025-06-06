@@ -10,30 +10,31 @@ const io = socketIO(server);
 const players = {};
 const waitingQueue = [];
 
-//socket connection
+// socket connection
 io.on("connection", (socket) => {
     console.log("User connected: ", socket.id);
 
-    //random matching
+    // random matching
     socket.on("joinQueue", (playerData) => {
         if (playerData.cards.length !== 3) {
             socket.emit("card_length_error", "you have to select three cards!");
             return;
         }
-        
-        // key:players[socket.id], {value}
+
+        // key: players[socket.id], {value}
         players[socket.id] = {
             name: playerData.name,
             socket: socket,
-            cards: playerData.cards,   //three card information
-            selectedIndex: undefined,  //select one card
+            cards: playerData.cards,   // three card information
+            selectedIndex: undefined,  // select one card
             roomId: null,
-            wins: 0                    //wins point = 2 -> game win
+            wins: 0                    // wins point = 2 -> game win
         };
 
         waitingQueue.push(socket.id);
         console.log("waitingQueue: ", waitingQueue);
-        //room matching logic
+
+        // room matching logic
         if (waitingQueue.length >= 2) {
             const id1 = waitingQueue.shift();
             const id2 = waitingQueue.shift();
@@ -42,9 +43,10 @@ io.on("connection", (socket) => {
                 players[id].roomId = roomId;
                 players[id].socket.join(roomId);
             });
+
             io.to(roomId).emit("matched", "matching success! select card!");
 
-            //send three cards info
+            // send three cards info
             const roomPlayers = Object.values(players).filter(p => p.roomId === roomId);
             const [p1, p2] = roomPlayers;
             p1.socket.emit("cardsInfo", p2.cards);
@@ -56,7 +58,7 @@ io.on("connection", (socket) => {
         };
     });
 
-    //battle logic
+    // battle logic
     socket.on("selectCard", (index) => {
         const player = players[socket.id];
         if (!player) return;
@@ -68,19 +70,41 @@ io.on("connection", (socket) => {
         if (roomPlayers.length === 2 &&
             roomPlayers.every(p => p.selectedIndex !== undefined)) {
 
+            //아래 있던 거 위치 변경 #pjh 수정
             const [p1, p2] = roomPlayers;
             const p1_card = p1.cards[p1.selectedIndex];
             const p2_card = p2.cards[p2.selectedIndex];
-            const p1_card_info = { name: p1_card.name, hp: p1_card.hp, attack: p1_card.attack, defend: p1_card.defend, speed: p1_card.speed, socket: p1.socket };
-            const p2_card_info = { name: p2_card.name, hp: p2_card.hp, attack: p2_card.attack, defend: p2_card.defend, speed: p2_card.speed, socket: p2.socket };
+
+            // 두 플레이어가 모두 선택한 경우 클라이언트한테 배틀 시작 신호 보내기 #pjh 수정
+            p1.socket.emit("startBattle", p2_card);
+            p2.socket.emit("startBattle", p1_card);
+
+            const p1_card_info = {
+                name: p1_card.name,
+                hp: p1_card.hp,
+                attack: p1_card.attack,
+                defend: p1_card.defend,
+                speed: p1_card.speed,
+                image: p1_card.image,
+                socket: p1.socket
+            }; // 수정 image 추가 #pjh 수정
+
+            const p2_card_info = {
+                name: p2_card.name,
+                hp: p2_card.hp,
+                attack: p2_card.attack,
+                defend: p2_card.defend,
+                speed: p2_card.speed,
+                image: p2_card.image,
+                socket: p2.socket
+            }; // 수정 image 추가 #pjh 수정
 
             battle(p1_card_info, p2_card_info, (winnerSocketId) => {
                 players[winnerSocketId].wins += 1;
 
-                //이긴 뒤 연결 끊기 넣기
+                // 이긴 뒤 연결 끊기 넣기
                 if (players[winnerSocketId].wins === 2) {
-
-                    io.to(roomId).emit("matchResult", players[winnerSocketId].name + "wins!");
+                    io.to(roomId).emit("matchResult", players[winnerSocketId].name + " wins!");
                     console.log(`${roomId} game end`);
                 } else {
                     p1.selectedIndex = undefined;
@@ -90,6 +114,11 @@ io.on("connection", (socket) => {
                         wins: {
                             [p1.name]: p1.wins,
                             [p2.name]: p2.wins
+                        },
+                        // UI쪽 문제로 인해 추가 죄송합니다 민기님 ㅠㅠ #pjh 수정
+                        cardsInfo: {
+                            [p1.socket.id]: p2.cards,
+                            [p2.socket.id]: p1.cards
                         }
                     });
                 }
@@ -97,33 +126,33 @@ io.on("connection", (socket) => {
         }
     });
 
-    //disconnect logic
-    //수정 할 듯
+    // disconnect logic
+    // 수정 할 듯 -> delete players[socket.id] 부분 중복이라 위치 변경 및 중복 삭제 #pjh 수정
     socket.on("disconnect", () => {
         console.log("Disconnected: ", socket.id);
         const roomId = players[socket.id]?.roomId;
         const index = waitingQueue.indexOf(socket.id);
         console.log("waitingQueue: ", waitingQueue);
+
         if (index !== -1) waitingQueue.splice(index, 1);
         if (players[socket.id]) {
             const roomId = players[socket.id].roomId;
-            delete players[socket.id];
             io.to(roomId).emit("oppnent_distconnect");
+            delete players[socket.id]; // 위치 한 줄 아래로 이동 #pjh 수정
         }
+
         if (roomId) {
             const roomPlayers = Object.values(players).filter(p => p.roomId === roomId);
-
             const remainingPlayer = roomPlayers.find(p => p.socket.id !== socket.id);
 
             if (remainingPlayer) {
-                io.to(roomId).emit("matchResult", remainingPlayer.name + "wins! (opponent disconnected)");
+                io.to(roomId).emit("matchResult", remainingPlayer.name + " wins! (opponent disconnected)");
             }
         }
-        delete players[socket.id];
+
         console.log(`${roomId} game end`);
     });
 });
-
 
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");

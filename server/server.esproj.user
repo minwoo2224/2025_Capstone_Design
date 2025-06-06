@@ -6,8 +6,8 @@
   "name": "Debug node process",
   "type": "node",
   "request": "launch",
-  "cwd": "C:\\Users\\jomin\\2025_Capstone_Design\\server",
-  "program": "C:\\Users\\jomin\\2025_Capstone_Design\\server/server.js",
+  "cwd": "C:\\Users\\user\\Source\\Repos\\2025_Capstone_Design\\server",
+  "program": "C:\\Users\\user\\Source\\Repos\\2025_Capstone_Design\\server/server.js",
   "stopOnEntry": false,
   "skipFiles": [
     "&lt;node_internals/**&gt;"
