@@ -153,45 +153,45 @@ class _SearchPageState extends State<SearchPage> {
           Expanded(
             child: _selectedOrder != null
                 ? ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: families.length,
-                    itemBuilder: (context, index) {
-                      final family = families[index];
-                      return Card(
-                        elevation: 2,
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        child: ListTile(
-                          title: Text(family, style: const TextStyle(fontSize: 17)),
-                          onTap: () => _onFamilyTap(family),
-                        ),
-                      );
-                    },
-                  )
-                : ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      if (_orderResults.isNotEmpty)
-                        ..._orderResults.map((order) => Card(
-                              elevation: 3,
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              child: ListTile(
-                                title: Text(order, style: const TextStyle(fontSize: 18)),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () => _onOrderTap(order),
-                              ),
-                            )),
-                      if (_familyResults.isNotEmpty)
-                        ..._familyResults.map((entry) => Card(
-                              elevation: 2,
-                              margin: const EdgeInsets.symmetric(vertical: 4),
-                              child: ListTile(
-                                title: Text(entry["family"]!, style: const TextStyle(fontSize: 17)),
-                                subtitle: Text("(${entry["order"]})"),
-                                onTap: () => _onFamilyTap(entry["family"]!),
-                              ),
-                            )),
-                    ],
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: families.length,
+              itemBuilder: (context, index) {
+                final family = families[index];
+                return Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    title: Text(family, style: const TextStyle(fontSize: 17)),
+                    onTap: () => _onFamilyTap(family),
                   ),
+                );
+              },
+            )
+                : ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                if (_orderResults.isNotEmpty)
+                  ..._orderResults.map((order) => Card(
+                    elevation: 3,
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    child: ListTile(
+                      title: Text(order, style: const TextStyle(fontSize: 18)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _onOrderTap(order),
+                    ),
+                  )),
+                if (_familyResults.isNotEmpty)
+                  ..._familyResults.map((entry) => Card(
+                    elevation: 2,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      title: Text(entry["family"]!, style: const TextStyle(fontSize: 17)),
+                      subtitle: Text("(${entry["order"]})"),
+                      onTap: () => _onFamilyTap(entry["family"]!),
+                    ),
+                  )),
+              ],
+            ),
           ),
         ],
       ),

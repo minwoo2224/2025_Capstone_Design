@@ -1,7 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 
-class InsectDetailPage extends StatelessWidget {
+class InsectDetailPage extends StatefulWidget {
   final Map<String, dynamic> insect;
   final VoidCallback? onDelete;
 
@@ -10,6 +11,19 @@ class InsectDetailPage extends StatelessWidget {
     required this.insect,
     this.onDelete,
   });
+
+  @override
+  State<InsectDetailPage> createState() => _InsectDetailPageState();
+}
+
+class _InsectDetailPageState extends State<InsectDetailPage> {
+  late String _insectName;
+
+  @override
+  void initState() {
+    super.initState();
+    _insectName = widget.insect['name'] ?? '이름없음';
+  }
 
   String _getIconPath(String type) {
     switch (type) {
@@ -32,10 +46,10 @@ class InsectDetailPage extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () async {
-              Navigator.of(context).pop(); // AlertDialog 닫기
-              Navigator.of(context).pop(); // BottomSheet 닫기
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
 
-              final imageFile = File(insect['image']);
+              final imageFile = File(widget.insect['image']);
               final jsonFilePath = imageFile.path.replaceAll('.jpg', '.json');
               final jsonFile = File(jsonFilePath);
 
@@ -43,7 +57,58 @@ class InsectDetailPage extends StatelessWidget {
                 await jsonFile.delete();
               }
 
-              onDelete?.call(); // 필요 시 상위에서 갱신
+              widget.onDelete?.call();
+            },
+            child: const Text('예'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('아니오'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _editName(BuildContext context) {
+    final TextEditingController controller = TextEditingController(text: _insectName);
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('이름 수정'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 8,
+          decoration: const InputDecoration(hintText: '새 이름을 입력하세요'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isEmpty) return;
+
+              setState(() {
+                _insectName = newName;
+              });
+
+              final imageFile = File(widget.insect['image']);
+              final jsonPath = imageFile.path.replaceAll('.jpg', '.json');
+              final jsonFile = File(jsonPath);
+
+              if (await jsonFile.exists()) {
+                try {
+                  final content = await jsonFile.readAsString();
+                  final data = jsonDecode(content) as Map<String, dynamic>;
+                  data['name'] = newName;
+                  await jsonFile.writeAsString(jsonEncode(data));
+                } catch (e) {
+                  debugPrint("이름 저장 실패: $e");
+                }
+              }
+
+              Navigator.of(context).pop();
             },
             child: const Text('예'),
           ),
@@ -58,9 +123,9 @@ class InsectDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconPath = _getIconPath(insect['type']);
-    final order = insect['order'] ?? '';
-    final health = insect['health'];
+    final iconPath = _getIconPath(widget.insect['type']);
+    final order = widget.insect['order'] ?? '';
+    final health = widget.insect['health'];
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.95,
@@ -81,7 +146,7 @@ class InsectDetailPage extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.file(
-                        File(insect['image']),
+                        File(widget.insect['image']),
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -99,13 +164,23 @@ class InsectDetailPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                insect['name'] ?? '이름없음',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
+              GestureDetector(
+                onTap: () => _editName(context),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _insectName,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.edit, size: 24, color: Colors.grey),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
@@ -121,7 +196,7 @@ class InsectDetailPage extends StatelessWidget {
               const SizedBox(height: 20),
               Center(
                 child: Text(
-                  'ATK ${insect['attack']} / DEF ${insect['defense']} / SPD ${insect['speed']}',
+                  'ATK ${widget.insect['attack']} / DEF ${widget.insect['defense']} / SPD ${widget.insect['speed']}',
                   style: const TextStyle(fontSize: 16, color: Colors.black),
                 ),
               ),
