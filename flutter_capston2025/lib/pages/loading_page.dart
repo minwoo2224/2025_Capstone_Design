@@ -93,7 +93,7 @@ class _LoadingPageState extends State<LoadingPage> {
             ),
           ),
           Positioned(
-            top: screenHeight * 0.4 - 15, // 캐릭터 위치 조정, 낮추려면 +, 높이려면 -
+            top: screenHeight * 0.4 - 10, // 캐릭터 위치 조정, 낮추려면 +, 높이려면 -
             left: 0,
             right: 0,
             child: Lottie.asset(

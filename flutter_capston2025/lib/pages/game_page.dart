@@ -1,13 +1,14 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_capston2025/models/insect_card.dart';
 import 'package:flutter_capston2025/socket/socket_service.dart';
+import 'package:flutter_capston2025/pages/battle_card_selection_page.dart';
 
 class GamePage extends StatefulWidget {
   final String userUid;
   final List<InsectCard> playerCards;
-  final List<dynamic> opponentCards;
+  final List<InsectCard> opponentCards;
   final Color themeColor;
+  final int round;
 
   const GamePage({
     Key? key,
@@ -15,6 +16,7 @@ class GamePage extends StatefulWidget {
     required this.playerCards,
     required this.opponentCards,
     required this.themeColor,
+    this.round = 1,
   }) : super(key: key);
 
   @override
@@ -22,27 +24,29 @@ class GamePage extends StatefulWidget {
 }
 
 class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
-  int? selectedCardIndex;
-  String battleLog = '';
-  int round = 1;
-  List<dynamic> opponentCards = [];
+  late InsectCard playerCard;
+  late InsectCard opponentCard;
 
-  // 애니메이션 관련 변수
   late AnimationController _attackController;
   late Animation<Offset> _playerAttackAnim;
   late Animation<Offset> _enemyHitAnim;
 
+  int playerHp = 0;
+  int opponentHp = 0;
+  String battleLog = '';
   int damageAmount = 0;
+
   bool showPlayerDamage = false;
   bool showEnemyDamage = false;
-
-  String? playerImage;
-  String? opponentImage;
 
   @override
   void initState() {
     super.initState();
-    opponentCards = widget.opponentCards;
+    playerCard = widget.playerCards.first;
+    opponentCard = widget.opponentCards.first;
+
+    playerHp = playerCard.health;
+    opponentHp = opponentCard.health;
 
     _attackController = AnimationController(
       vsync: this,
@@ -51,7 +55,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
     _playerAttackAnim = Tween<Offset>(
       begin: Offset.zero,
-      end: const Offset(0.4, -0.2),
+      end: const Offset(0.2, -0.1),
     ).chain(CurveTween(curve: Curves.easeOut)).animate(_attackController);
 
     _enemyHitAnim = Tween<Offset>(
@@ -59,193 +63,197 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       end: const Offset(-0.1, 0.1),
     ).chain(CurveTween(curve: Curves.elasticIn)).animate(_attackController);
 
-    SocketService.socket.on('matchResult', _onMatchResult);
-    SocketService.socket.on('nextRound', _onNextRound);
-    SocketService.socket.on('cardsInfo', _onCardsInfo);
     SocketService.socket.on('updateStatus', _onUpdateStatus);
     SocketService.socket.on('updateResult', _onUpdateResult);
     SocketService.socket.on('critical', _onCritical);
     SocketService.socket.on('miss', _onMiss);
+    SocketService.socket.on('normalAttack', _onNormalAttack);
+
+    SocketService.setNextRoundCallback(_onNextRound); // ✅ 다음 라운드 정보 수신 콜백 등록
   }
 
   @override
   void dispose() {
     _attackController.dispose();
-    SocketService.socket.off('matchResult', _onMatchResult);
-    SocketService.socket.off('nextRound', _onNextRound);
-    SocketService.socket.off('cardsInfo', _onCardsInfo);
     SocketService.socket.off('updateStatus', _onUpdateStatus);
     SocketService.socket.off('updateResult', _onUpdateResult);
     SocketService.socket.off('critical', _onCritical);
     SocketService.socket.off('miss', _onMiss);
+    SocketService.socket.off('normalAttack', _onNormalAttack);
     super.dispose();
-  }
-
-  void _onMatchResult(dynamic msg) {
-    setState(() => battleLog = msg.toString());
-  }
-
-  void _onNextRound(dynamic data) {
-    setState(() {
-      battleLog = '다음 라운드 시작';
-      selectedCardIndex = null;
-      round += 1;
-    });
-  }
-
-  void _onCardsInfo(dynamic data) {
-    setState(() => opponentCards = data);
-  }
-
-  void _onCritical(dynamic msg) {
-    setState(() => battleLog = msg.toString());
-  }
-
-  void _onMiss(dynamic msg) {
-    setState(() => battleLog = msg.toString());
-  }
-
-  void _onUpdateResult(dynamic msg) {
-    setState(() => battleLog = msg.toString());
   }
 
   void _onUpdateStatus(dynamic data) async {
     final selfName = data['self'];
-    final enemyName = data['enemy'];
     final selfHp = data['selfHp'];
     final enemyHp = data['enemyHp'];
-
-    final isPlayerTurn = widget.playerCards[selectedCardIndex!].name == selfName;
+    final isPlayerTurn = playerCard.name == selfName;
 
     setState(() {
-      playerImage = widget.playerCards[selectedCardIndex!].image;
-      opponentImage = opponentCards.firstWhere((c) => c['name'] == enemyName)['image'];
-      damageAmount = (enemyHp - selfHp).abs();
+      playerHp = isPlayerTurn ? selfHp : enemyHp;
+      opponentHp = isPlayerTurn ? enemyHp : selfHp;
       showPlayerDamage = !isPlayerTurn;
       showEnemyDamage = isPlayerTurn;
     });
 
     await _attackController.forward(from: 0);
+    await Future.delayed(const Duration(milliseconds: 500));
 
-    await Future.delayed(const Duration(milliseconds: 400));
+    if (mounted) {
+      setState(() {
+        showPlayerDamage = false;
+        showEnemyDamage = false;
+      });
+    }
+  }
 
+  void _onUpdateResult(dynamic msg) {
+    final result = msg.toString();
     setState(() {
-      showPlayerDamage = false;
-      showEnemyDamage = false;
+      battleLog = result;
     });
   }
 
-  void _selectCard(int index) {
-    if (selectedCardIndex != null) return;
+  void _onCritical(dynamic msg) {
+    setState(() {
+      battleLog = "Critical! ${playerCard.name}이 ${opponentCard.name}에게 $damageAmount 데미지를 입혔습니다";
+    });
+  }
+
+  void _onMiss(dynamic msg) {
+    setState(() {
+      battleLog = "Miss! 공격이 빗나갔습니다.";
+    });
+  }
+
+  void _onNormalAttack(dynamic data) {
+    final attacker = data['attacker'];
+    final defender = data['defender'];
+    final damage = data['damage'];
 
     setState(() {
-      selectedCardIndex = index;
-      battleLog = '선택한 카드: ${widget.playerCards[index].name}';
+      battleLog = "$attacker이 $defender에게 $damage 데미지를 입혔습니다";
+      damageAmount = damage;
     });
+  }
 
-    SocketService.selectCard(index);
+  void _onNextRound(List<InsectCard> newMyCards, List<InsectCard> newOpponentCards) {
+    final usedIndex = widget.round - 1;
+    final remainingPlayerCards = List<InsectCard>.from(newMyCards);
+    if (usedIndex < remainingPlayerCards.length) {
+      remainingPlayerCards.removeAt(usedIndex); // ✅ 이전 라운드에 사용한 카드 제거
+    }
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BattleCardSelectionPage(
+            userUid: widget.userUid,
+            playerCards: remainingPlayerCards,
+            opponentCards: newOpponentCards,
+            round: widget.round + 1,
+            themeColor: widget.themeColor,
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildHpBar(int current, int max) {
+    final percent = current / max;
+    return Stack(
+      children: [
+        Container(
+          width: 100,
+          height: 8,
+          decoration: BoxDecoration(
+            color: Colors.red.shade200,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        Container(
+          width: 100 * percent,
+          height: 8,
+          decoration: BoxDecoration(
+            color: Colors.green,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('게임 - Round $round'),
-        backgroundColor: widget.themeColor,
-      ),
-      body: Stack(
-        children: [
-          if (playerImage != null && opponentImage != null) ...[
-            // 상대 곤충
-            Positioned(
-              top: 60,
-              right: 16,
-              child: SlideTransition(
-                position: _enemyHitAnim,
-                child: Stack(
-                  children: [
-                    Image.asset(opponentImage!, height: 100),
-                    if (showEnemyDamage)
-                      Positioned(
-                        left: -60,
-                        child: Text('-$damageAmount', style: const TextStyle(fontSize: 20, color: Colors.red)),
-                      ),
-                  ],
-                ),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/background/forest_background.png',
+                fit: BoxFit.cover,
               ),
             ),
-
-            // 내 곤충
-            Positioned(
-              bottom: 120,
-              left: 16,
-              child: SlideTransition(
-                position: _playerAttackAnim,
-                child: Stack(
-                  children: [
-                    Image.asset(playerImage!, height: 100),
-                    if (showPlayerDamage)
-                      Positioned(
-                        right: -60,
-                        child: Text('-$damageAmount', style: const TextStyle(fontSize: 20, color: Colors.red)),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-
-          // 전투 로그
-          Positioned(
-            bottom: 16,
-            left: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(battleLog, textAlign: TextAlign.center),
-            ),
-          ),
-
-          // 카드 선택 UI
-          if (selectedCardIndex == null) ...[
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 180,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: widget.playerCards.length,
-                itemBuilder: (context, index) {
-                  final card = widget.playerCards[index];
-                  return GestureDetector(
-                    onTap: () => _selectCard(index),
-                    child: Container(
-                      margin: const EdgeInsets.all(10),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.blue),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: SlideTransition(
+                      position: _enemyHitAnim,
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Image.asset(card.image, height: 60),
-                          Text(card.name),
+                          Image.asset(opponentCard.image, height: 120),
+                          _buildHpBar(opponentHp, opponentCard.health),
+                          if (showEnemyDamage)
+                            Text('-$damageAmount',
+                                style: const TextStyle(
+                                    color: Colors.red, fontSize: 20)),
                         ],
                       ),
                     ),
-                  );
-                },
+                  ),
+                  const SizedBox(height: 80),
+                  Align(
+                    alignment: Alignment.bottomLeft,
+                    child: SlideTransition(
+                      position: _playerAttackAnim,
+                      child: Column(
+                        children: [
+                          Image.asset(playerCard.image, height: 120),
+                          _buildHpBar(playerHp, playerCard.health),
+                          if (showPlayerDamage)
+                            Text('-$damageAmount',
+                                style: const TextStyle(
+                                    color: Colors.red, fontSize: 20)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      battleLog,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
