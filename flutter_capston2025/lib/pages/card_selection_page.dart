@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_capston2025/models/insect_card.dart';
 import 'package:flutter_capston2025/socket/socket_service.dart';
 import 'package:flutter_capston2025/storage/login_storage.dart';
-import 'package:flutter_capston2025/pages/game_page.dart';
+import 'package:flutter_capston2025/pages/battle_card_selection_page.dart';
+
 
 class CardSelectionPage extends StatefulWidget {
   final List<InsectCard> allCards;
@@ -68,20 +69,33 @@ class _CardSelectionPageState extends State<CardSelectionPage> {
       return;
     }
 
-    SocketService.sendCardData(userUid!, selectedCards);
+    // 🔄 서버와 연결하고 카드 전송 및 상대 카드 수신 콜백 설정
+    SocketService.connect(
+      onConnected: () {
+        SocketService.sendCardData(userUid!, selectedCards);
+      },
+      onMatched: () {
+        print("🎯 매칭 완료, 카드 수신 대기 중...");
+      },
+      onCardsReceived: (opponentCards) {
+        print("🆚 상대 카드 수신 완료, 배틀 카드 선택 페이지로 이동");
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => GamePage(
-          userUid: userUid!,
-          playerCards: selectedCards,
-          opponentCards: [],
-          themeColor: Colors.blue,
-        ),
-      ),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BattleCardSelectionPage(
+              userUid: userUid!,
+              playerCards: selectedCards,
+              opponentCards: opponentCards,
+              round: 1,
+              themeColor: Colors.blue,
+            ),
+          ),
+        );
+      },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -121,9 +135,14 @@ class _CardSelectionPageState extends State<CardSelectionPage> {
                   if (card.image.isNotEmpty)
                     Image.asset(card.image, height: 60, fit: BoxFit.contain),
                   const SizedBox(height: 8),
-                  Text(card.name,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                  Text(
+                    card.name,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Text("목: ${card.order}", style: const TextStyle(color: Colors.black)),
                   Text("공격력: ${card.attack}", style: const TextStyle(color: Colors.black)),

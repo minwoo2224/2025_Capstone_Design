@@ -11,6 +11,9 @@ https://lottiefiles.com/ 여기서 MP4 파일을 JSON 파일로 변환
 (loading_character_male.json 파일은 배경에 흰색 제거하고,
 loading_character_female.json 파일은 만들면 진행)
 
+이미지로 영상 만들 때 사용했던 웹페이지
+https://app.runwayml.com/video-tools/teams/parkjunghoon011004/ai-tools/generate
+
 추후에 해야하는 것
 1. dictionary_page.dart
 도감에 있는 카드들이 assets/cards 폴더 안의 json 파일들을 사용자가 볼 수 있도록 자동으로 업데이트되는 기능

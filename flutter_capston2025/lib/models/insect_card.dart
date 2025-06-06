@@ -28,16 +28,16 @@ class InsectCard {
 
   factory InsectCard.fromJson(Map<String, dynamic> json) {
     return InsectCard(
-      name: json['name'],
-      type: json['type'],
-      attack: json['attack'],
-      defense: json['defense'],
-      health: json['health'],
-      speed: json['speed'],
-      critical: (json['critical'] as num).toDouble(),
-      evasion: (json['evasion'] as num).toDouble(),
-      order: json['order'],
-      image: json['image'],
+      name: json['name'] ?? '알 수 없음',
+      type: json['type'] ?? '기타',
+      attack: json['attack'] ?? 0,
+      defense: json['defense'] ?? json['defend'] ?? 0,  // 둘 중 하나 사용
+      health: json['health'] ?? json['hp'] ?? 100,      // 서버는 'hp' 사용
+      speed: json['speed'] ?? 0,
+      critical: (json['critical'] ?? 0).toDouble(),
+      evasion: (json['evasion'] ?? 0).toDouble(),
+      order: json['order'] ?? '기타',
+      image: json['image'] ?? '',  // 상대 카드는 이미지가 없을 수 있음
     );
   }
 
@@ -64,7 +64,6 @@ class InsectCard {
   };
 }
 
-/// assets/cards 폴더 내 모든 JSON 카드 파일을 자동으로 로딩
 Future<List<InsectCard>> loadInsectCards() async {
   final manifestContent = await rootBundle.loadString('AssetManifest.json');
   final Map<String, dynamic> manifestMap = jsonDecode(manifestContent);
