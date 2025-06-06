@@ -43,9 +43,6 @@ Future<void> captureAndSavePhoto({
   await dataFile.writeAsString(jsonEncode(insectData));
 
   if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('촬영 및 저장 완료!')),
-    );
   }
 
   onCompleted();

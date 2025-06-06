@@ -197,6 +197,8 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     final createDateToPass = formatJoinDate(_loginInfo['joinDate']);
+    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
     final pages = [
       CollectionPage(
         themeColor: _themeColor,
@@ -224,8 +226,11 @@ class _MainNavigationState extends State<MainNavigation> {
     ];
 
     return Scaffold(
+      resizeToAvoidBottomInset: true, // 다시 true로 설정
       body: pages[_selectedIndex],
-      floatingActionButton: Transform.translate(
+      floatingActionButton: isKeyboardVisible
+          ? null
+          : Transform.translate(
         offset: const Offset(0, 8),
         child: GestureDetector(
           onTap: () async {
@@ -272,7 +277,9 @@ class _MainNavigationState extends State<MainNavigation> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
+      bottomNavigationBar: isKeyboardVisible
+          ? null
+          : BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 6.0,
         child: Row(
