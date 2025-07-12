@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   firebase_core: ^3.9.0
-  google_sign_in: ^6.2.2
+  google_sign_in: ^7.1.0
   firebase_auth: ^5.3.4
   cloud_firestore: ^5.6.8
   image_picker: ^1.1.2
@@ -23,11 +23,15 @@ dependencies:
   socket_io_client: ^3.1.2 # 서버 통신을 위한 flutter socket io
   google_fonts: ^6.2.1 #레트로 느낌나는 폰트
   lottie: ^3.3.1 #GIF 파일 오류 해결용
+  http: ^1.2.1 # 네트워크 통신용
+  xml: ^6.5.0 # XML 데이터 파싱용
+  flutter_html: ^3.0.0-beta.2 # html 오류 수정 추가
+  webview_flutter: ^4.7.0 # 번역 무료를 위한 추가 코드
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
   pigeon: ^25.3.2
 
 flutter:
@@ -78,6 +82,7 @@ flutter:
     - assets/images/title/mantis.png
     - assets/images/title/rhinoceros_beetle.png
     - assets/images/title/title.png
+    - assets/translation_map.json #곤충 도감 번역 파일
 
   # assets:
   #   - images/a_dot_burr.jpeg

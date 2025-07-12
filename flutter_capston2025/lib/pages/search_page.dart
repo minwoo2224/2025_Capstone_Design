@@ -1,200 +1,182 @@
+// lib/pages/search_page.dart
 
 import 'package:flutter/material.dart';
-import 'family_detail_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../api/insect_info.dart';
+import '../api/insect_api_service.dart';
+import '../detail/detail_page.dart';
 
 class SearchPage extends StatefulWidget {
   final Color themeColor;
 
-  const SearchPage({super.key, required this.themeColor});
+  const SearchPage({
+    super.key,
+    required this.themeColor,
+  });
 
   @override
   State<SearchPage> createState() => _SearchPageState();
 }
 
 class _SearchPageState extends State<SearchPage> {
-  final TextEditingController _searchController = TextEditingController();
+  final InsectApiService _apiService = InsectApiService();
+  final TextEditingController _controller = TextEditingController();
+  Future<List<InsectInfo>>? _searchFuture;
 
-  final Map<String, List<String>> _insectOrders = {
-    "딱정벌레": ["사슴벌레과", "풍뎅이과"],
-    "벌": ["꿀벌과", "말벌과"],
-    "나비": ["흰나비과", "호랑나비과"],
-  };
-
-  final Map<String, Map<String, String>> familyData = {
-    "사슴벌레과": {
-      "description": "암수 모두 진한 갈색 또는 약한 갈색을 띠며, 수컷의 머리의 투구모양의 돌기가 큰 특징이다. 암컷은 다른 사슴벌레보다 머리 부분이 앞으로 길게 돌출한것이 특징이며, 다리부분의 노란 털과 수컷의 경우 온몸에 황금색의 털이 많이 분포하고 있다.",
-      "image": "assets/images/family_detail_page/딱정벌레/사슴벌레과/사슴벌레1.jpg"
-    },
-    "풍뎅이과": {
-      "description": "우리나라에서 가장 큰 풍뎅이류로 수컷과 암컷은 수컷에 잘 발달되어 있는 큰 뿔로서 쉽게 구별이 가능하며, 수컷은 암컷보다 광택이 강하고 암컷은 수컷보다 털이 많이 분포되어 있다",
-      "image": "assets/images/family_detail_page/딱정벌레/풍뎅이과/풍뎅이1.jpg"
-    },
-    "꿀벌과": {
-      "description": "몸길이는 12 mm 내외이다. 날개는 투명하고 황색이며, 맥은 흑갈색이고, 발목마디는 황갈색이다.",
-      "image": "assets/images/family_detail_page/벌/꿀벌과/꿀벌1.jpg"
-    },
-    "말벌과": {
-      "description": "말벌속의 일반특징에 추가하여 다음과 같은 특징을 가지고 있다. 두순은 서로 접하고 있는 큰 점각을 가지고 있다. 두순 정단 함입은 얕으며, 치상돌기의 끝은 반원형을 이룬다. 견판전용골선은 완전하다. 전흉배판 측면 하방에는 주름이 나 있다. 제1복절 후연의 노란 줄무늬가 매우 가는 특징에 의하여 다른 종들과 용이하게 구분된다.",
-      "image": "assets/images/family_detail_page/벌/말벌과/말벌1.jpg"
-    },
-    "흰나비과": {
-      "description": "종 대부분의 날개가 흰색이나 노란색 계통이며 배추흰나비, 큰줄흰나비는 검정 무늬가 있다.",
-      "image": "assets/images/family_detail_page/나비/흰나비과/흰나비1.jpg"
-    },
-    "호랑나비과": {
-      "description": "몸빛은 검거나 어두운 갈색이고 누런색, 붉은색, 남색 따위의 아름다운 얼룩무늬가 있다. ",
-      "image": "assets/images/family_detail_page/나비/호랑나비과/호랑나비1.jpg"
-    }
-  };
-
-  List<String> _orderResults = [];
-  List<Map<String, String>> _familyResults = [];
-  String? _selectedOrder;
+  List<String> _searchHistory = [];
 
   @override
   void initState() {
     super.initState();
-    _orderResults = _insectOrders.keys.toList();
-    _searchController.addListener(_onSearchChanged);
+    _loadSearchHistory();
   }
 
-  void _onSearchChanged() {
-    final query = _searchController.text.toLowerCase();
+  // [수정됨] "Enter"를 누르거나 검색 기록을 탭했을 때 호출되는 함수
+  void _performSearch(String query) {
+    if (query.isEmpty) return;
+
+    // 키보드 숨기기
+    FocusScope.of(context).unfocus();
+
     setState(() {
-      _selectedOrder = null;
-      if (query.isEmpty) {
-        _orderResults = _insectOrders.keys.toList();
-        _familyResults.clear();
-      } else {
-        _orderResults = _insectOrders.keys
-            .where((order) => order.toLowerCase().contains(query))
-            .toList();
-        _familyResults = [];
-        _insectOrders.forEach((order, families) {
-          for (final family in families) {
-            if (family.toLowerCase().contains(query)) {
-              _familyResults.add({"order": order, "family": family});
-            }
-          }
-        });
-      }
+      _controller.text = query; // 텍스트 필드에 검색어 반영
+      _searchFuture = _apiService.searchInsects(query);
+      _saveSearchHistory(query); // 검색 시 기록 저장
     });
   }
 
-  void _onOrderTap(String order) {
+  Future<void> _loadSearchHistory() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _selectedOrder = order;
+      _searchHistory = prefs.getStringList('search_history') ?? [];
     });
   }
 
-  void _onFamilyTap(String family) {
-    final data = familyData[family];
-    if (data != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => FamilyDetailPage(
-            familyName: family,
-            description: data["description"]!,
-            imagePath: data["image"]!,
-          ),
-        ),
-      );
+  Future<void> _saveSearchHistory(String query) async {
+    final prefs = await SharedPreferences.getInstance();
+    _searchHistory.remove(query);
+    _searchHistory.insert(0, query);
+    if (_searchHistory.length > 10) {
+      _searchHistory = _searchHistory.sublist(0, 10);
     }
+    await prefs.setStringList('search_history', _searchHistory);
+    setState(() {});
   }
+
+  Future<void> _deleteHistoryItem(String item) async {
+    final prefs = await SharedPreferences.getInstance();
+    _searchHistory.remove(item);
+    await prefs.setStringList('search_history', _searchHistory);
+    setState(() {});
+  }
+
+  // [삭제됨] Timer와 _onSearchChanged 함수는 더 이상 필요 없으므로 삭제합니다.
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final families = _selectedOrder != null ? _insectOrders[_selectedOrder!]! : [];
-
     return Scaffold(
-      appBar: AppBar(title: const Text("곤충 백과사전")),
+      appBar: AppBar(
+        backgroundColor: widget.themeColor,
+        title: const Text("곤충 통합 검색 🦋"),
+        centerTitle: true,
+      ),
       body: Column(
         children: [
-          Container(height: kBottomNavigationBarHeight, color: widget.themeColor),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
-              controller: _searchController,
+              controller: _controller,
+              // [수정됨] onChanged -> onSubmitted
+              // 키보드에서 '완료' 또는 'Enter'를 누르면 _performSearch 함수 호출
+              onSubmitted: (query) => _performSearch(query),
               decoration: InputDecoration(
-                hintText: "곤충 목 또는 분류를 검색하세요",
+                hintText: "곤충 이름으로 검색 후 Enter...",
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(30),
                 ),
-                filled: true,
-                fillColor: Colors.grey.shade200,
               ),
             ),
           ),
-          if (_selectedOrder != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  TextButton.icon(
-                    onPressed: () => setState(() => _selectedOrder = null),
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text("돌아가기"),
-                  ),
-                  Text(
-                    "${_selectedOrder!} → 분류",
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
           Expanded(
-            child: _selectedOrder != null
-                ? ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: families.length,
-              itemBuilder: (context, index) {
-                final family = families[index];
-                return Card(
-                  elevation: 2,
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  child: ListTile(
-                    title: Text(family, style: const TextStyle(fontSize: 17)),
-                    onTap: () => _onFamilyTap(family),
-                  ),
-                );
-              },
-            )
-                : ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                if (_orderResults.isNotEmpty)
-                  ..._orderResults.map((order) => Card(
-                    elevation: 3,
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    child: ListTile(
-                      title: Text(order, style: const TextStyle(fontSize: 18)),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _onOrderTap(order),
-                    ),
-                  )),
-                if (_familyResults.isNotEmpty)
-                  ..._familyResults.map((entry) => Card(
-                    elevation: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    child: ListTile(
-                      title: Text(entry["family"]!, style: const TextStyle(fontSize: 17)),
-                      subtitle: Text("(${entry["order"]})"),
-                      onTap: () => _onFamilyTap(entry["family"]!),
-                    ),
-                  )),
-              ],
-            ),
+            child: _controller.text.isEmpty
+                ? _buildHistoryList()
+                : _buildResultList(),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildHistoryList() {
+    // (이 부분 코드는 변경 없음)
+    if (_searchHistory.isEmpty) {
+      return const Center(child: Text("최근 검색 기록이 없습니다."));
+    }
+    return ListView.builder(
+      itemCount: _searchHistory.length,
+      itemBuilder: (context, index) {
+        final item = _searchHistory[index];
+        return ListTile(
+          leading: const Icon(Icons.history),
+          title: Text(item),
+          trailing: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => _deleteHistoryItem(item),
+          ),
+          onTap: () {
+            _performSearch(item);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildResultList() {
+    // (이 부분 코드는 변경 없음)
+    if (_searchFuture == null) {
+      return const Center(child: Text("검색어를 입력하고 Enter를 누르세요."));
+    }
+    return FutureBuilder<List<InsectInfo>>(
+      future: _searchFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text("오류 발생: ${snapshot.error}"));
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text("검색 결과가 없습니다."));
+        }
+        final insects = snapshot.data!;
+        return ListView.builder(
+          itemCount: insects.length,
+          itemBuilder: (context, index) {
+            final insect = insects[index];
+            return ListTile(
+              leading: insect.imageUrl.isNotEmpty
+                  ? Image.network(insect.imageUrl, width: 60, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.bug_report))
+                  : const Icon(Icons.bug_report, size: 40),
+              title: Text(insect.commonName),
+              subtitle: Text(insect.sciName),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => DetailPage(insect: insect)),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }
