@@ -1,11 +1,14 @@
-// lib/pages/search_page.dart
+import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/insect_info.dart';
 import '../api/insect_api_service.dart';
 import '../detail/detail_page.dart';
+
 
 class SearchPage extends StatefulWidget {
   final Color themeColor;
@@ -25,24 +28,58 @@ class _SearchPageState extends State<SearchPage> {
   Future<List<InsectInfo>>? _searchFuture;
 
   List<String> _searchHistory = [];
+  List<String> _koreanInsectNames = [];
+  List<String> _suggestions = [];
 
   @override
   void initState() {
     super.initState();
+    _loadKoreanInsectNames();
     _loadSearchHistory();
   }
 
-  // [수정됨] "Enter"를 누르거나 검색 기록을 탭했을 때 호출되는 함수
-  void _performSearch(String query) {
-    if (query.isEmpty) return;
+  Future<void> _loadKoreanInsectNames() async {
+    try {
+      final String jsonString = await rootBundle.loadString('assets/translation_map.json');
+      final Map<String, dynamic> jsonMap = json.decode(jsonString);
+      setState(() {
+        _koreanInsectNames = jsonMap.keys.toList();
+      });
+    } catch (e) {
+      print("translation_map.json 파일 로딩 실패: $e");
+    }
+  }
 
-    // 키보드 숨기기
-    FocusScope.of(context).unfocus();
+  void _onTextChanged(String query) {
+    if (_searchFuture != null) {
+      setState(() {
+        _searchFuture = null;
+      });
+    }
+
+    if (query.isEmpty) {
+      setState(() {
+        _suggestions.clear();
+      });
+      return;
+    }
 
     setState(() {
-      _controller.text = query; // 텍스트 필드에 검색어 반영
+      _suggestions = _koreanInsectNames
+          .where((name) => name.contains(query))
+          .take(5)
+          .toList();
+    });
+  }
+
+  void _performSearch(String query) {
+    if (query.isEmpty) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _controller.text = query;
+      _controller.selection = TextSelection.fromPosition(TextPosition(offset: _controller.text.length));
       _searchFuture = _apiService.searchInsects(query);
-      _saveSearchHistory(query); // 검색 시 기록 저장
+      _saveSearchHistory(query);
     });
   }
 
@@ -61,7 +98,6 @@ class _SearchPageState extends State<SearchPage> {
       _searchHistory = _searchHistory.sublist(0, 10);
     }
     await prefs.setStringList('search_history', _searchHistory);
-    setState(() {});
   }
 
   Future<void> _deleteHistoryItem(String item) async {
@@ -70,8 +106,6 @@ class _SearchPageState extends State<SearchPage> {
     await prefs.setStringList('search_history', _searchHistory);
     setState(() {});
   }
-
-  // [삭제됨] Timer와 _onSearchChanged 함수는 더 이상 필요 없으므로 삭제합니다.
 
   @override
   void dispose() {
@@ -93,30 +127,65 @@ class _SearchPageState extends State<SearchPage> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _controller,
-              // [수정됨] onChanged -> onSubmitted
-              // 키보드에서 '완료' 또는 'Enter'를 누르면 _performSearch 함수 호출
-              onSubmitted: (query) => _performSearch(query),
+              onChanged: _onTextChanged,
+              onSubmitted: _performSearch,
               decoration: InputDecoration(
-                hintText: "곤충 이름으로 검색 후 Enter...",
+                hintText: "곤충 이름으로 검색...",
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
+                suffixIcon: _controller.text.isNotEmpty
+                    ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() {
+                      _controller.clear();
+                      _suggestions.clear();
+                      _searchFuture = null;
+                    });
+                  },
+                )
+                    : null,
               ),
             ),
           ),
-          Expanded(
-            child: _controller.text.isEmpty
-                ? _buildHistoryList()
-                : _buildResultList(),
-          ),
+          Expanded(child: _buildContent()),
         ],
       ),
     );
   }
 
+  Widget _buildContent() {
+    if (_searchFuture != null) {
+      return _buildResultList();
+    } else if (_controller.text.isNotEmpty) {
+      return _buildSuggestionList();
+    } else {
+      return _buildHistoryList();
+    }
+  }
+
+  Widget _buildSuggestionList() {
+    if (_suggestions.isEmpty) {
+      return const Center(child: Text("추천 검색어가 없습니다."));
+    }
+    return ListView.builder(
+      itemCount: _suggestions.length,
+      itemBuilder: (context, index) {
+        final suggestion = _suggestions[index];
+        return ListTile(
+          leading: const Icon(Icons.saved_search),
+          title: Text(suggestion),
+          onTap: () {
+            _performSearch(suggestion);
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildHistoryList() {
-    // (이 부분 코드는 변경 없음)
     if (_searchHistory.isEmpty) {
       return const Center(child: Text("최근 검색 기록이 없습니다."));
     }
@@ -140,7 +209,6 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildResultList() {
-    // (이 부분 코드는 변경 없음)
     if (_searchFuture == null) {
       return const Center(child: Text("검색어를 입력하고 Enter를 누르세요."));
     }
@@ -163,14 +231,19 @@ class _SearchPageState extends State<SearchPage> {
             final insect = insects[index];
             return ListTile(
               leading: insect.imageUrl.isNotEmpty
-                  ? Image.network(insect.imageUrl, width: 60, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.bug_report))
+                  ? Image.network(insect.imageUrl,
+                  width: 60,
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, e, s) =>
+                  const Icon(Icons.bug_report))
                   : const Icon(Icons.bug_report, size: 40),
               title: Text(insect.commonName),
               subtitle: Text(insect.sciName),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => DetailPage(insect: insect)),
+                  MaterialPageRoute(
+                      builder: (_) => DetailPage(insect: insect)),
                 );
               },
             );
