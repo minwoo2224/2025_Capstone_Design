@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'dart:async';
-import 'dart:math' as math;
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:lottie/lottie.dart';
 import '../models/insect_card.dart';
 import '../socket/socket_service.dart';
@@ -28,7 +29,7 @@ class _LoadingPageState extends State<LoadingPage> {
   Future<void> _initializeWithMinimumDelay() async {
     final stopwatch = Stopwatch()..start();
 
-    final cards = await _loadAllCardsFromAssets();
+    final cards = await _loadUserInsects();
     bool isConnected = false;
 
     final completer = Completer<void>();
@@ -57,20 +58,25 @@ class _LoadingPageState extends State<LoadingPage> {
     );
   }
 
-  Future<List<InsectCard>> _loadAllCardsFromAssets() async {
-    final manifestContent = await rootBundle.loadString('AssetManifest.json');
-    final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+  Future<List<InsectCard>> _loadUserInsects() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final photoDir = Directory('${dir.path}/insect_photos');
 
-    final cardJsonPaths = manifestMap.keys
-        .where((path) => path.startsWith('assets/cards/') && path.endsWith('.json'))
-        .toList();
+    if (!await photoDir.exists()) return [];
+
+    final files = photoDir
+        .listSync()
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.json'));
 
     List<InsectCard> cards = [];
 
-    for (String path in cardJsonPaths) {
-      final jsonString = await rootBundle.loadString(path);
-      final jsonMap = json.decode(jsonString);
-      cards.add(InsectCard.fromJson(jsonMap));
+    for (final file in files) {
+      try {
+        final content = await file.readAsString();
+        final data = jsonDecode(content);
+        cards.add(InsectCard.fromJson(data));
+      } catch (_) {}
     }
 
     return cards;
@@ -93,7 +99,7 @@ class _LoadingPageState extends State<LoadingPage> {
             ),
           ),
           Positioned(
-            top: screenHeight * 0.4 - 10, // 캐릭터 위치 조정, 낮추려면 +, 높이려면 -
+            top: screenHeight * 0.4 - 10,
             left: 0,
             right: 0,
             child: Lottie.asset(

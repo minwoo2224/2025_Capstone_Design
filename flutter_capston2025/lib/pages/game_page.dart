@@ -1,7 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_capston2025/models/insect_card.dart';
-import 'package:flutter_capston2025/socket/socket_service.dart';
 import 'package:flutter_capston2025/pages/battle_card_selection_page.dart';
+import 'package:flutter_capston2025/socket/socket_service.dart';
 
 class GamePage extends StatefulWidget {
   final String userUid;
@@ -69,7 +70,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     SocketService.socket.on('miss', _onMiss);
     SocketService.socket.on('normalAttack', _onNormalAttack);
 
-    SocketService.setNextRoundCallback(_onNextRound); // ✅ 다음 라운드 정보 수신 콜백 등록
+    SocketService.setNextRoundCallback(_onNextRound);
   }
 
   @override
@@ -141,7 +142,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     final usedIndex = widget.round - 1;
     final remainingPlayerCards = List<InsectCard>.from(newMyCards);
     if (usedIndex < remainingPlayerCards.length) {
-      remainingPlayerCards.removeAt(usedIndex); // ✅ 이전 라운드에 사용한 카드 제거
+      remainingPlayerCards.removeAt(usedIndex);
     }
 
     Future.delayed(const Duration(seconds: 2), () {
@@ -208,7 +209,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                       position: _enemyHitAnim,
                       child: Column(
                         children: [
-                          Image.asset(opponentCard.image, height: 120),
+                          Image.file(File(opponentCard.image), height: 120), // ✅ 수정됨
                           _buildHpBar(opponentHp, opponentCard.health),
                           if (showEnemyDamage)
                             Text('-$damageAmount',
@@ -225,7 +226,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                       position: _playerAttackAnim,
                       child: Column(
                         children: [
-                          Image.asset(playerCard.image, height: 120),
+                          Image.file(File(playerCard.image), height: 120), // ✅ 수정됨
                           _buildHpBar(playerHp, playerCard.health),
                           if (showPlayerDamage)
                             Text('-$damageAmount',

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_capston2025/models/insect_card.dart';
 import 'package:flutter_capston2025/pages/game_page.dart';
@@ -20,33 +21,32 @@ class BattleCardSelectionPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<BattleCardSelectionPage> createState() => _BattleCardSelectionPageState();
+  State<BattleCardSelectionPage> createState() =>
+      _BattleCardSelectionPageState();
 }
 
 class _BattleCardSelectionPageState extends State<BattleCardSelectionPage> {
   int? selectedIndex;
-  List<InsectCard> remainingCards = [];
+  late List<InsectCard> remainingCards;
+
+  Offset _tapPos = Offset.zero;
 
   @override
   void initState() {
     super.initState();
-
-    // 남은 카드 계산 (round에 따라 1장씩 사용했다고 가정)
     remainingCards = widget.playerCards.sublist(widget.round - 1);
 
-    // 서버에서 startBattle 이벤트 수신 시 상대 카드도 함께 전달됨
     SocketService.socket.on('startBattle', (data) {
       if (selectedIndex != null) {
-        final selectedCard = remainingCards[selectedIndex!];
-        final opponentCard = InsectCard.fromJson(data);
-
+        final sel = remainingCards[selectedIndex!];
+        final opp = InsectCard.fromJson(data);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => GamePage(
+            builder: (_) => GamePage(
               userUid: widget.userUid,
-              playerCards: [selectedCard],
-              opponentCards: [opponentCard],
+              playerCards: [sel],
+              opponentCards: [opp],
               round: widget.round,
               themeColor: widget.themeColor,
             ),
@@ -56,102 +56,152 @@ class _BattleCardSelectionPageState extends State<BattleCardSelectionPage> {
     });
   }
 
-  void _startBattle() {
-    if (selectedIndex != null) {
-      final selectedCard = remainingCards[selectedIndex!];
-      SocketService.selectCard(selectedIndex!);
-      SocketService.sendSelectedCard(selectedCard);
-    }
-  }
-
-  Widget _buildCard(InsectCard card, {bool selected = false}) {
-    return Container(
-      width: 120,
-      margin: const EdgeInsets.all(8),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: selected ? Colors.red : Colors.blue, width: 2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          if (card.image.isNotEmpty) Image.asset(card.image, height: 40),
-          Text('이름: ${card.name}', style: const TextStyle(color: Colors.black)),
-          Text('타입: ${card.type}', style: const TextStyle(color: Colors.black)),
-          Text('공격: ${card.attack}', style: const TextStyle(color: Colors.black)),
-          Text('방어: ${card.defense}', style: const TextStyle(color: Colors.black)),
-          Text('체력: ${card.health}', style: const TextStyle(color: Colors.black)),
-          Text('속도: ${card.speed}', style: const TextStyle(color: Colors.black)),
-        ],
-      ),
-    );
-  }
-
   @override
   void dispose() {
     SocketService.socket.off('startBattle');
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.5),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 40),
+  void _startBattle() {
+    if (selectedIndex != null) {
+      final sel = remainingCards[selectedIndex!];
+      SocketService.selectCard(selectedIndex!);
+      SocketService.sendSelectedCard(sel);
+    }
+  }
+
+  void _showDetails(InsectCard card, Offset pos) {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    showMenu(
+      context: context,
+      position: RelativeRect.fromRect(
+        pos & const Size(40, 40),
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        PopupMenuItem(
+          enabled: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(card.name,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(card.order),
+              Text('HP: ${card.health}'),
+              Text('ATK: ${card.attack}'),
+              Text('DEF: ${card.defense}'),
+              Text('SPD: ${card.speed}'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _cardWidget(InsectCard card,
+      {bool isSelf = false, bool selected = false}) {
+    final icon = {
+      '가위': 'assets/icons/scissors.png',
+      '바위': 'assets/icons/rock.png',
+      '보': 'assets/icons/paper.png'
+    }[card.type];
+
+    return GestureDetector(
+      onTapDown: (e) => _tapPos = e.globalPosition,
+      onTap: isSelf
+          ? () {
+        setState(() {
+          selectedIndex = remainingCards.indexOf(card);
+        });
+      }
+          : null,
+      onLongPress: isSelf ? () => _showDetails(card, _tapPos) : null,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.black87,
-              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: selected ? Colors.red : Colors.transparent, width: 2),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: Stack(
               children: [
-                Text('게임 - Round ${widget.round}',
-                    style: const TextStyle(fontSize: 20, color: Colors.white)),
-                const SizedBox(height: 16),
-                const Text('상대 카드',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: widget.opponentCards.map((c) => _buildCard(c)).toList(),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(card.image),
+                    width: 100,
+                    height: 140,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.broken_image),
                   ),
                 ),
-                const SizedBox(height: 16),
-                const Text('배틀에 참가할 카드 선택',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: remainingCards.asMap().entries.map((entry) {
-                      int index = entry.key;
-                      InsectCard card = entry.value;
-                      return GestureDetector(
-                        onTap: () => setState(() => selectedIndex = index),
-                        child: _buildCard(card, selected: selectedIndex == index),
-                      );
-                    }).toList(),
+                if (icon != null)
+                  Positioned(
+                    left: 4,
+                    bottom: 4,
+                    child: Image.asset(icon, width: 24, height: 24),
                   ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _startBattle,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                  ),
-                  child: const Text('배틀 시작'),
-                )
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black54,
+      body: Center(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.black87,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('Round ${widget.round}',
+                style: const TextStyle(color: Colors.white, fontSize: 20)),
+            const SizedBox(height: 16),
+            const Text('상대 카드', style: TextStyle(color: Colors.white)),
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                  children: widget.opponentCards
+                      .map((c) => _cardWidget(c, isSelf: false))
+                      .toList()),
+            ),
+            const SizedBox(height: 16),
+            const Text('내 카드 선택', style: TextStyle(color: Colors.white)),
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: remainingCards
+                    .map((c) => _cardWidget(
+                  c,
+                  isSelf: true,
+                  selected: selectedIndex != null &&
+                      remainingCards[selectedIndex!] == c,
+                ))
+                    .toList(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _startBattle,
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
+              child: const Text('배틀 시작'),
+            ),
+          ]),
         ),
       ),
     );

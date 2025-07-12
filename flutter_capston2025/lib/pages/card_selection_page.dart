@@ -1,9 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_capston2025/models/insect_card.dart';
+import 'package:flutter_capston2025/pages/battle_card_selection_page.dart';
 import 'package:flutter_capston2025/socket/socket_service.dart';
 import 'package:flutter_capston2025/storage/login_storage.dart';
-import 'package:flutter_capston2025/pages/battle_card_selection_page.dart';
-
 
 class CardSelectionPage extends StatefulWidget {
   final List<InsectCard> allCards;
@@ -69,17 +69,12 @@ class _CardSelectionPageState extends State<CardSelectionPage> {
       return;
     }
 
-    // 🔄 서버와 연결하고 카드 전송 및 상대 카드 수신 콜백 설정
     SocketService.connect(
       onConnected: () {
         SocketService.sendCardData(userUid!, selectedCards);
       },
-      onMatched: () {
-        print("🎯 매칭 완료, 카드 수신 대기 중...");
-      },
+      onMatched: () {},
       onCardsReceived: (opponentCards) {
-        print("🆚 상대 카드 수신 완료, 배틀 카드 선택 페이지로 이동");
-
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -96,14 +91,62 @@ class _CardSelectionPageState extends State<CardSelectionPage> {
     );
   }
 
+  void _showCardDetails(BuildContext context, InsectCard card, Offset tapPosition) {
+    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    showMenu(
+      context: context,
+      position: RelativeRect.fromRect(
+        tapPosition & const Size(40, 40),
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        PopupMenuItem(
+          enabled: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                card.name,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(card.order),
+              Text('HP: ${card.health}'),
+              Text('ATK: ${card.attack}'),
+              Text('DEF: ${card.defense}'),
+              Text('SPD: ${card.speed}'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getIconPath(String type) {
+    switch (type) {
+      case '가위':
+        return 'assets/icons/scissors.png';
+      case '바위':
+        return 'assets/icons/rock.png';
+      case '보':
+        return 'assets/icons/paper.png';
+      default:
+        return '';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final allCards = widget.allCards;
 
     return Scaffold(
+      backgroundColor: const Color(0xFF1C1C3A),
       appBar: AppBar(
         title: const Text("카드 선택"),
+        backgroundColor: Colors.black,
         actions: [
           TextButton(
             onPressed: _submitSelection,
@@ -112,43 +155,72 @@ class _CardSelectionPageState extends State<CardSelectionPage> {
         ],
       ),
       body: allCards.isEmpty
-          ? const Center(child: Text("카드가 없습니다."))
+          ? const Center(child: Text("카드가 없습니다.", style: TextStyle(color: Colors.white70)))
           : GridView.builder(
         padding: const EdgeInsets.all(10),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 0.8,
+          crossAxisCount: 3,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 0.9,
         ),
         itemCount: allCards.length,
         itemBuilder: (context, index) {
           final card = allCards[index];
           final isSelected = selectedCards.contains(card);
+          final iconPath = _getIconPath(card.type);
+          Offset tapPosition = Offset.zero;
+
           return GestureDetector(
+            onTapDown: (details) => tapPosition = details.globalPosition,
             onTap: () => _toggleCardSelection(card),
-            child: Card(
-              color: isSelected ? Colors.lightGreen[100] : Colors.white,
+            onLongPress: () => _showCardDetails(context, card, tapPosition),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isSelected ? Colors.green : Colors.transparent,
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.black87,
+              ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (card.image.isNotEmpty)
-                    Image.asset(card.image, height: 60, fit: BoxFit.contain),
-                  const SizedBox(height: 8),
-                  Text(
-                    card.name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            File(card.image),
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                            errorBuilder: (_, __, ___) => const Center(
+                              child: Icon(Icons.broken_image, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        if (iconPath.isNotEmpty)
+                          Positioned(
+                            left: 6,
+                            bottom: 6,
+                            child: Image.asset(
+                              iconPath,
+                              width: 28,
+                              height: 28,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text("목: ${card.order}", style: const TextStyle(color: Colors.black)),
-                  Text("공격력: ${card.attack}", style: const TextStyle(color: Colors.black)),
-                  Text("방어력: ${card.defense}", style: const TextStyle(color: Colors.black)),
-                  Text("체력: ${card.health}", style: const TextStyle(color: Colors.black)),
-                  Text("속도: ${card.speed}", style: const TextStyle(color: Colors.black)),
+                  Text(
+                    card.name,
+                    style: const TextStyle(color: Colors.white),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
                 ],
               ),
             ),
