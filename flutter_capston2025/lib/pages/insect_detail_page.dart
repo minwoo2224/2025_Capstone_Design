@@ -21,7 +21,7 @@ class _InsectDetailPageState extends State<InsectDetailPage> {
 
   @override
   void initState() {
-    super.initState();
+    super.initState()                                                                                                                                                                                                  ;
     _insectName = widget.insect['name'] ?? '이름없음';
   }
 
