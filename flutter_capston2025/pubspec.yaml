@@ -83,6 +83,8 @@ flutter:
     - assets/images/title/rhinoceros_beetle.png
     - assets/images/title/title.png
     - assets/translation_map.json #곤충 도감 번역 파일
+    - assets/images/victory.png
+    - assets/images/defeat.png
 
   # assets:
   #   - images/a_dot_burr.jpeg
