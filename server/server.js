@@ -13,6 +13,7 @@ const players = {};      // { [socketId]: { name, socket, cards, selectedIndex, 
 const waitingQueue = []; // socketId list
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
@@ -85,6 +86,8 @@ io.on('connection', (socket) => {
             return;
         }
 =======
+=======
+>>>>>>> b168eb18dab09c4aeda712317d14c360e8d857d5
 // socket connection
 io.on("connection", (socket) => {
     console.log("User connected: ", socket.id);
@@ -147,6 +150,7 @@ io.on("connection", (socket) => {
         if (roomPlayers.length !== 2) return;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         // 양측 모두 선택되면 배틀 시작 (승자는 다음 라운드에 index 유지)
         if (roomPlayers.every((p) => p.selectedIndex !== undefined)) {
             const [p1, p2] = roomPlayers;
@@ -169,6 +173,8 @@ io.on("connection", (socket) => {
                 socket: p2.socket,
             };
 =======
+=======
+>>>>>>> b168eb18dab09c4aeda712317d14c360e8d857d5
             //아래 있던 거 위치 변경 #pjh 수정
             const [p1, p2] = roomPlayers;
             const p1_card = p1.cards[p1.selectedIndex];
@@ -197,6 +203,9 @@ io.on("connection", (socket) => {
                 image: p2_card.image,
                 socket: p2.socket
             }; // 수정 image 추가 #pjh 수정
+<<<<<<< HEAD
+>>>>>>> b168eb18dab09c4aeda712317d14c360e8d857d5
+=======
 >>>>>>> b168eb18dab09c4aeda712317d14c360e8d857d5
 
             battle(p1_card_info, p2_card_info, (winnerSocketId) => {
@@ -206,6 +215,7 @@ io.on("connection", (socket) => {
                     const winner = players[winnerSocketId];
                     if (!winner) return;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
                     const loserSocketId = (winnerSocketId === p1Id) ? p2Id : p1Id;
                     const loser = players[loserSocketId];
@@ -256,6 +266,8 @@ io.on("connection", (socket) => {
                             [p2Id]: p1.cards,
                         },
 =======
+=======
+>>>>>>> b168eb18dab09c4aeda712317d14c360e8d857d5
                 // 이긴 뒤 연결 끊기 넣기
                 if (players[winnerSocketId].wins === 2) {
                     io.to(roomId).emit("matchResult", players[winnerSocketId].name + " wins!");
@@ -284,6 +296,7 @@ io.on("connection", (socket) => {
     });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     // 연결 종료
     socket.on('disconnect', () => {
         console.log('Disconnected:', socket.id);
@@ -301,6 +314,8 @@ io.on("connection", (socket) => {
             if (remaining) {
                 io.to(roomId).emit('matchResult', `${remaining.name} wins! (opponent disconnected)`);
 =======
+=======
+>>>>>>> b168eb18dab09c4aeda712317d14c360e8d857d5
     // disconnect logic
     // 수정 할 듯 -> delete players[socket.id] 부분 중복이라 위치 변경 및 중복 삭제 #pjh 수정
     socket.on("disconnect", () => {
@@ -322,10 +337,14 @@ io.on("connection", (socket) => {
 
             if (remainingPlayer) {
                 io.to(roomId).emit("matchResult", remainingPlayer.name + " wins! (opponent disconnected)");
+<<<<<<< HEAD
+>>>>>>> b168eb18dab09c4aeda712317d14c360e8d857d5
+=======
 >>>>>>> b168eb18dab09c4aeda712317d14c360e8d857d5
             }
             console.log(`${roomId} game end`);
         }
+<<<<<<< HEAD
 <<<<<<< HEAD
     });
 });
@@ -343,6 +362,13 @@ server.listen(8080, () => {
     });
 });
 
+=======
+
+        console.log(`${roomId} game end`);
+    });
+});
+
+>>>>>>> b168eb18dab09c4aeda712317d14c360e8d857d5
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
 });
@@ -350,4 +376,7 @@ app.get("/", (req, res) => {
 server.listen(8080, () => {
     console.log(`server running at http://localhost:8080`);
 });
+<<<<<<< HEAD
+>>>>>>> b168eb18dab09c4aeda712317d14c360e8d857d5
+=======
 >>>>>>> b168eb18dab09c4aeda712317d14c360e8d857d5
