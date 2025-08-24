@@ -3,11 +3,28 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebuggerFlavor>LaunchJsonDebugger</DebuggerFlavor>
     <LaunchJsonTarget>{
+<<<<<<< HEAD
   "name": "Launch Node and Browser",
   "configurations": [
     "Debug node process",
     "localhost (Chrome)"
   ]
+=======
+  "name": "Debug node process",
+  "type": "node",
+  "request": "launch",
+  "cwd": "C:\\Users\\user\\Source\\Repos\\2025_Capstone_Design\\server",
+  "program": "C:\\Users\\user\\Source\\Repos\\2025_Capstone_Design\\server/server.js",
+  "stopOnEntry": false,
+  "skipFiles": [
+    "&lt;node_internals/**&gt;"
+  ],
+  "console": "externalTerminal",
+  "env": {
+    "port": "8080"
+  },
+  "args": []
+>>>>>>> b168eb18dab09c4aeda712317d14c360e8d857d5
 }</LaunchJsonTarget>
   </PropertyGroup>
 </Project>
