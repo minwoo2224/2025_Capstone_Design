@@ -84,65 +84,13 @@ io.on('connection', (socket) => {
             return;
         }
 
-// socket connection
-io.on("connection", (socket) => {
-    console.log("User connected: ", socket.id);
-
-    // random matching
-    socket.on("joinQueue", (playerData) => {
-        if (playerData.cards.length !== 3) {
-            socket.emit("card_length_error", "you have to select three cards!");
-            return;
-        }
-
-        // key: players[socket.id], {value}
-        players[socket.id] = {
-            name: playerData.name,
-            socket: socket,
-            cards: playerData.cards,   // three card information
-            selectedIndex: undefined,  // select one card
-            roomId: null,
-            wins: 0                    // wins point = 2 -> game win
-        };
-
-        waitingQueue.push(socket.id);
-        console.log("waitingQueue: ", waitingQueue);
-
-        // room matching logic
-        if (waitingQueue.length >= 2) {
-            const id1 = waitingQueue.shift();
-            const id2 = waitingQueue.shift();
-            const roomId = `${id1}-${id2}`;
-            [id1, id2].forEach(id => {
-                players[id].roomId = roomId;
-                players[id].socket.join(roomId);
-            });
-
-            io.to(roomId).emit("matched", "matching success! select card!");
-
-            // send three cards info
-            const roomPlayers = Object.values(players).filter(p => p.roomId === roomId);
-            const [p1, p2] = roomPlayers;
-            p1.socket.emit("cardsInfo", p2.cards);
-            p2.socket.emit("cardsInfo", p1.cards);
-            console.log(p2.cards);
-            console.log(p1.cards);
-
-            console.log(io.sockets.adapter.rooms);
-        };
-    });
-
-    // battle logic
-    socket.on("selectCard", (index) => {
-        const player = players[socket.id];
-        if (!player) return;
-
         me.selectedIndex = index;
         const roomId = me.roomId;
         if (!roomId) return;
 
         const roomPlayers = Object.values(players).filter((p) => p.roomId === roomId);
         if (roomPlayers.length !== 2) return;
+
         // 양측 모두 선택되면 배틀 시작 (승자는 다음 라운드에 index 유지)
         if (roomPlayers.every((p) => p.selectedIndex !== undefined)) {
             const [p1, p2] = roomPlayers;
@@ -164,35 +112,6 @@ io.on("connection", (socket) => {
                 defend: p2Card.defend, speed: p2Card.speed, image: p2Card.image,
                 socket: p2.socket,
             };
-
-            //아래 있던 거 위치 변경 #pjh 수정
-            const [p1, p2] = roomPlayers;
-            const p1_card = p1.cards[p1.selectedIndex];
-            const p2_card = p2.cards[p2.selectedIndex];
-
-            // 두 플레이어가 모두 선택한 경우 클라이언트한테 배틀 시작 신호 보내기 #pjh 수정
-            p1.socket.emit("startBattle", p2_card);
-            p2.socket.emit("startBattle", p1_card);
-
-            const p1_card_info = {
-                name: p1_card.name,
-                hp: p1_card.hp,
-                attack: p1_card.attack,
-                defend: p1_card.defend,
-                speed: p1_card.speed,
-                image: p1_card.image,
-                socket: p1.socket
-            }; // 수정 image 추가 #pjh 수정
-
-            const p2_card_info = {
-                name: p2_card.name,
-                hp: p2_card.hp,
-                attack: p2_card.attack,
-                defend: p2_card.defend,
-                speed: p2_card.speed,
-                image: p2_card.image,
-                socket: p2.socket
-            }; // 수정 image 추가 #pjh 수정
 
             battle(p1_card_info, p2_card_info, (winnerSocketId) => {
                 try {
@@ -249,25 +168,6 @@ io.on("connection", (socket) => {
                             [p1Id]: p2.cards,
                             [p2Id]: p1.cards,
                         },
-
-                // 이긴 뒤 연결 끊기 넣기
-                if (players[winnerSocketId].wins === 2) {
-                    io.to(roomId).emit("matchResult", players[winnerSocketId].name + " wins!");
-                    console.log(`${roomId} game end`);
-                } else {
-                    p1.selectedIndex = undefined;
-                    p2.selectedIndex = undefined;
-
-                    io.to(roomId).emit("nextRound", {
-                        wins: {
-                            [p1.name]: p1.wins,
-                            [p2.name]: p2.wins
-                        },
-                        // UI쪽 문제로 인해 추가 죄송합니다 민기님 ㅠㅠ #pjh 수정
-                        cardsInfo: {
-                            [p1.socket.id]: p2.cards,
-                            [p2.socket.id]: p1.cards
-                        }
                     });
                 } catch (err) {
                     console.error('post-battle error:', err);
@@ -292,28 +192,6 @@ io.on("connection", (socket) => {
             const remaining = roomPlayers.find((p) => p.socket.id !== socket.id);
             if (remaining) {
                 io.to(roomId).emit('matchResult', `${remaining.name} wins! (opponent disconnected)`);
-
-    // disconnect logic
-    // 수정 할 듯 -> delete players[socket.id] 부분 중복이라 위치 변경 및 중복 삭제 #pjh 수정
-    socket.on("disconnect", () => {
-        console.log("Disconnected: ", socket.id);
-        const roomId = players[socket.id]?.roomId;
-        const index = waitingQueue.indexOf(socket.id);
-        console.log("waitingQueue: ", waitingQueue);
-
-        if (index !== -1) waitingQueue.splice(index, 1);
-        if (players[socket.id]) {
-            const roomId = players[socket.id].roomId;
-            io.to(roomId).emit("oppnent_distconnect");
-            delete players[socket.id]; // 위치 한 줄 아래로 이동 #pjh 수정
-        }
-
-        if (roomId) {
-            const roomPlayers = Object.values(players).filter(p => p.roomId === roomId);
-            const remainingPlayer = roomPlayers.find(p => p.socket.id !== socket.id);
-
-            if (remainingPlayer) {
-                io.to(roomId).emit("matchResult", remainingPlayer.name + " wins! (opponent disconnected)");
             }
             console.log(`${roomId} game end`);
         }
@@ -326,20 +204,4 @@ app.get('/', (req, res) => {
 
 server.listen(8080, () => {
     console.log('server running at http://localhost:8080');
-});
-
-        console.log(`${roomId} game end`);
-    });
-    });
-
-        console.log(`${roomId} game end`);
-    });
-});
-
-app.get("/", (req, res) => {
-    res.sendFile(__dirname + "/index.html");
-});
-
-server.listen(8080, () => {
-    console.log(`server running at http://localhost:8080`);
 });
