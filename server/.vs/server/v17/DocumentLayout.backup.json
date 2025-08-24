@@ -3,16 +3,40 @@
   "WorkspaceRootPath": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|c:\\users\\jomin\\2025_capstone_design\\server\\battle.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|solutionrelative:battle.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+      "AbsoluteMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|c:\\users\\jomin\\2025_capstone_design\\server\\server.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|solutionrelative:server.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|c:\\users\\jomin\\2025_capstone_design\\server\\package.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|solutionrelative:package.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|c:\\users\\jomin\\2025_capstone_design\\server\\index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|solutionrelative:index.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|c:\\users\\jomin\\2025_capstone_design\\server\\server.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|solutionrelative:server.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+      "AbsoluteMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|c:\\users\\jomin\\2025_capstone_design\\server\\.vscode\\launch.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|solutionrelative:.vscode\\launch.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|c:\\users\\jomin\\2025_capstone_design\\server\\nuget.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|solutionrelative:nuget.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|c:\\users\\jomin\\2025_capstone_design\\server\\playerdata.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|solutionrelative:playerdata.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|c:\\users\\jomin\\2025_capstone_design\\server\\project_migration_log.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|solutionrelative:project_migration_log.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|c:\\users\\jomin\\2025_capstone_design\\server\\readme.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|solutionrelative:readme.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|c:\\users\\jomin\\2025_capstone_design\\server\\battle.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{67609ED6-6522-4954-B8CC-14D59E14C956}|server.esproj|solutionrelative:battle.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,45 +46,116 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 8,
           "Children": [
             {
               "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "launch.json",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\.vscode\\launch.json",
+              "RelativeDocumentMoniker": ".vscode\\launch.json",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\.vscode\\launch.json",
+              "RelativeToolTip": ".vscode\\launch.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-06-02T05:58:13.305Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "PROJECT_MIGRATION_LOG.txt",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\PROJECT_MIGRATION_LOG.txt",
+              "RelativeDocumentMoniker": "PROJECT_MIGRATION_LOG.txt",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\PROJECT_MIGRATION_LOG.txt",
+              "RelativeToolTip": "PROJECT_MIGRATION_LOG.txt",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
+              "WhenOpened": "2025-06-02T05:57:27.482Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "README.md",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\README.md",
+              "RelativeDocumentMoniker": "README.md",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\README.md",
+              "RelativeToolTip": "README.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2025-06-02T05:57:25.617Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "playerdata.json",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\playerdata.json",
+              "RelativeDocumentMoniker": "playerdata.json",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\playerdata.json",
+              "RelativeToolTip": "playerdata.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-06-02T05:57:24.725Z"
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "package.json",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\package.json",
+              "RelativeDocumentMoniker": "package.json",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\package.json",
+              "RelativeToolTip": "package.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAZAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-06-02T05:56:22.49Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "nuget.config",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\nuget.config",
+              "RelativeDocumentMoniker": "nuget.config",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\nuget.config",
+              "RelativeToolTip": "nuget.config",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000601|",
+              "WhenOpened": "2025-05-31T11:31:45.16Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "index.html",
               "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\index.html",
               "RelativeDocumentMoniker": "index.html",
               "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\index.html",
               "RelativeToolTip": "index.html",
-              "ViewState": "AgIAAAQAAAAAAAAAAAAQwG8AAAALAAAAAAAAAA==",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAAAAsAAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
-              "WhenOpened": "2025-05-11T07:34:00.098Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-11T07:34:00.098Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "battle.js",
+              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\battle.js",
+              "RelativeDocumentMoniker": "battle.js",
+              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\battle.js",
+              "RelativeToolTip": "battle.js",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACgAAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-11T07:33:56.664Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "battle.js",
-              "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\battle.js",
-              "RelativeDocumentMoniker": "battle.js",
-              "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\battle.js*",
-              "RelativeToolTip": "battle.js*",
-              "ViewState": "AgIAABsAAAAAAAAAAAAAADIAAAAgAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-05-11T07:33:56.664Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
               "Title": "server.js",
               "DocumentMoniker": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\server.js",
               "RelativeDocumentMoniker": "server.js",
               "ToolTip": "C:\\Users\\jomin\\2025_Capstone_Design\\server\\server.js",
               "RelativeToolTip": "server.js",
-              "ViewState": "AgIAAHcAAAAAAAAAAAAmwIUAAAADAAAAAAAAAA==",
+              "ViewState": "AgIAAF4AAAAAAAAAAAAawGcAAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2025-05-11T07:33:45.992Z"
+              "WhenOpened": "2025-05-11T07:33:45.992Z",
+              "EditorCaption": ""
             }
           ]
         }
