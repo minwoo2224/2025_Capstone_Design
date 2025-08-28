@@ -40,20 +40,19 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   InsectCard? _mySelectedCard;   // 내(고정/선택) 카드
   InsectCard? _oppSelectedCard;  // 상대(고정) 카드 — 선택 단계에서 엔트리 하이라이트용
 
-  // ===== 애니메이션 컨트롤러/애니메이션 =====
-  // 공격 모션 (한쪽만 전진)
+  // ===== 공격 모션 =====
   late final AnimationController _playerAttackCtrl;
   late final Animation<Offset> _playerAttackSlide;
   late final AnimationController _enemyAttackCtrl;
   late final Animation<Offset> _enemyAttackSlide;
 
-  // 피격 깜빡임 (opacity)
+  // ===== 피격 깜빡임 =====
   late final AnimationController _playerBlinkCtrl;
   late final Animation<double> _playerBlinkOpacity;
   late final AnimationController _enemyBlinkCtrl;
   late final Animation<double> _enemyBlinkOpacity;
 
-  // 패배(아래로 사라짐: slide+fade)
+  // ===== 패배(밑으로 사라짐) =====
   late final AnimationController _playerDefeatCtrl;
   late final Animation<Offset> _playerDefeatSlide;
   late final Animation<double> _playerDefeatFade;
@@ -61,7 +60,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   late final Animation<Offset> _enemyDefeatSlide;
   late final Animation<double> _enemyDefeatFade;
 
-  // 데미지 팝업(위로 떠오르며 사라짐) — 1초
+  // ===== 데미지 팝업(위로 떠오르며 사라짐) =====
   late final AnimationController _playerDamageCtrl;
   late final Animation<Offset> _playerDamageSlide;
   late final Animation<double> _playerDamageFade;
@@ -80,6 +79,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   bool _showResultOverlay = false;
   bool _isVictory = false;
+  bool _allowDismissOverlay = false; // 애니 끝난 뒤에만 탭 동작
 
   // 전투 상태
   int _playerHp = 0;
@@ -93,16 +93,19 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   int _roundNum = 1;
 
-  // ===== 이벤트/애니메이션 큐잉 =====
-  bool _isAnimating = false;                          // 현재 애니메이션 실행 중인지
-  final List<Map<String, dynamic>> _statusQueue = []; // updateStatus 이벤트 큐
-  dynamic _pendingNextRoundData;                      // nextRound 보류 페이로드
-  String? _pendingMatchResult;                        // matchResult 보류 메시지
-  String? _pendingRoundResult;                        // updateResult 보류 메시지(라운드 승리 문구)
+  // ===== 이벤트/애니메이션 큐 + 턴 시퀀스 =====
+  bool _isAnimating = false;
+  final List<Map<String, dynamic>> _statusQueue = [];
+  dynamic _pendingNextRoundData;
+  String? _pendingMatchResult;
+  String? _pendingRoundResult;
 
-  // 턴 동기화를 위한 보조 상태
-  bool _expectedAttackerIsMine = true; // 현재 턴의 공격자(예상). 첫 턴은 속도로 결정, 이후 매 턴 토글.
-  String? _pendingTurnMsg;             // normal/critical/miss 문구(공격 애니 "동시에" 출력)
+  // 턴 제어: 공격자와 시퀀스
+  bool _currentAttackerIsMine = true; // 현재 턴 공격자(이벤트에서 확정)
+  bool _lastAttackerIsMine = true;    // 직전 턴 공격자(critical/miss용 추정에 사용)
+  int _turnSeq = 0;                   // 이벤트가 만든 현재 턴 번호
+  int _handledSeq = 0;                // 처리 완료한 마지막 턴 번호
+  String? _pendingTurnMsg;            // normal/critical/miss 문구
 
   @override
   void initState() {
@@ -112,7 +115,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     _oppRemaining = List<InsectCard>.from(widget.opponentCards);
     _roundNum = widget.round;
 
-    // 공격 모션 (앞으로 살짝 전진)
+    // 공격 모션 (앞으로 전진)
     _playerAttackCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 240));
     _playerAttackSlide = Tween<Offset>(begin: Offset.zero, end: const Offset(0.16, -0.08))
         .chain(CurveTween(curve: Curves.easeOut))
@@ -123,7 +126,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         .chain(CurveTween(curve: Curves.easeOut))
         .animate(_enemyAttackCtrl);
 
-    // 깜빡임(피격 표시): 1.0 -> 0.35
+    // 깜빡임(피격 표시)
     _playerBlinkCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 120));
     _playerBlinkOpacity = Tween<double>(begin: 1.0, end: 0.35).animate(
       CurvedAnimation(parent: _playerBlinkCtrl, curve: Curves.easeInOut),
@@ -133,7 +136,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       CurvedAnimation(parent: _enemyBlinkCtrl, curve: Curves.easeInOut),
     );
 
-    // 패배(아래로 사라짐): slide + fade
+    // 패배(아래로 사라짐)
     _playerDefeatCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 360));
     _playerDefeatSlide = Tween<Offset>(begin: Offset.zero, end: const Offset(0, 0.7))
         .chain(CurveTween(curve: Curves.easeIn))
@@ -150,7 +153,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         .chain(CurveTween(curve: Curves.easeIn))
         .animate(_enemyDefeatCtrl);
 
-    // 데미지 팝업(위로 떠오르며 사라짐) — 1초로 느리게
+    // 데미지 팝업(1초)
     _playerDamageCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
     _playerDamageSlide = Tween<Offset>(begin: Offset.zero, end: const Offset(0, -0.7))
         .chain(CurveTween(curve: Curves.easeOut))
@@ -167,7 +170,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         .chain(CurveTween(curve: Curves.easeOut))
         .animate(_enemyDamageCtrl);
 
-    // ===== 결과 오버레이 컨트롤러 =====
+    // 결과 오버레이
     _victoryCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
     _victoryScale = Tween<double>(begin: 0.6, end: 1.05)
         .chain(CurveTween(curve: Curves.elasticOut))
@@ -227,13 +230,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   }
 
   // ===== 유틸 =====
-  Future<void> _blink(AnimationController ctrl, {int cycles = 2}) async {
-    ctrl.repeat(reverse: true);
-    await Future.delayed(ctrl.duration! * (cycles * 2));
-    ctrl.stop();
-    ctrl.reset();
-  }
-
   Future<void> _playAttack(AnimationController ctrl) async {
     await ctrl.forward();
     await ctrl.reverse();
@@ -242,6 +238,19 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   Future<void> _playDefeat(AnimationController ctrl) async {
     if (ctrl.isAnimating || ctrl.isCompleted) return;
     await ctrl.forward();
+  }
+
+  // 데미지 팝업과 깜빡임을 "동시에" 실행
+  Future<void> _playDamageAndBlink({
+    required AnimationController damageCtrl,
+    required AnimationController blinkCtrl,
+  }) async {
+    blinkCtrl.reset();
+    damageCtrl.reset();
+    blinkCtrl.repeat(reverse: true);   // 깜빡임 시작
+    await damageCtrl.forward();        // 팝업(1초)과 동시에 진행
+    blinkCtrl.stop();                  // 팝업 종료 시점에 정지/리셋
+    blinkCtrl.reset();
   }
 
   // ====== 상대 선택 카드 수신 → 전투 단계 진입 ======
@@ -259,10 +268,15 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
     if (_mySelectedCard == null || _oppSelectedCard == null) return;
 
-    // 첫 턴 공격자 예측(속도 비교: 서버 로직과 동일)
-    _expectedAttackerIsMine = (_mySelectedCard!.speed >= _oppSelectedCard!.speed);
+    // 첫 턴 공격자 "초기 예측"(속도 비교) — 실제 확정은 attack 이벤트에서
+    final firstMine = (_mySelectedCard!.speed >= _oppSelectedCard!.speed);
+    _currentAttackerIsMine = firstMine;
+    _lastAttackerIsMine = !firstMine; // 다음 miss/critical에서 토글로 추정할 때 사용
 
-    // 라운드 시작: 애니메이션 초기화
+    // 라운드 시작 초기화
+    _turnSeq = 0;
+    _handledSeq = 0;
+
     _playerAttackCtrl.reset();
     _enemyAttackCtrl.reset();
     _playerBlinkCtrl.reset();
@@ -286,20 +300,32 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     });
   }
 
-  // 턴 메시지는 보관해두었다가 "공격 애니메이션 시작과 동시에" 찍는다
+  // === 공격자 확정 & 턴 시퀀스 이동 ===
   void _onNormalAttack(dynamic data) {
     final map = Map<String, dynamic>.from(data as Map);
     final attacker = map['attacker']?.toString() ?? '';
     final defender = map['defender']?.toString() ?? '';
     final dmg = (map['damage'] as num?)?.toInt() ?? 0;
+
+    _currentAttackerIsMine = (_mySelectedCard?.name == attacker);
+    _lastAttackerIsMine = _currentAttackerIsMine;
+    _turnSeq++; // 새 턴 시작
     _pendingTurnMsg = '$attacker이(가) $defender에게 $dmg 데미지!';
   }
 
   void _onCritical(dynamic _) {
+    // 서버는 critical에 attacker 정보를 보내지 않음 → 직전 공격자 기준 토글
+    _currentAttackerIsMine = !_lastAttackerIsMine;
+    _lastAttackerIsMine = _currentAttackerIsMine;
+    _turnSeq++;
     _pendingTurnMsg = 'Critical!';
   }
 
   void _onMiss(dynamic _) {
+    // miss도 attacker 정보 없음 → 직전 공격자 기준 토글
+    _currentAttackerIsMine = !_lastAttackerIsMine;
+    _lastAttackerIsMine = _currentAttackerIsMine;
+    _turnSeq++;
     _pendingTurnMsg = 'Miss! 공격이 빗나갔습니다.';
   }
 
@@ -308,9 +334,12 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     _pendingRoundResult = msg.toString();
   }
 
-  // ====== updateStatus: 큐에 넣고 순차 애니메이션 ======
+  // ====== updateStatus: 큐에 넣고 "현재 턴"만 처리 ======
   void _onUpdateStatus(dynamic data) {
-    _statusQueue.add(Map<String, dynamic>.from(data as Map));
+    final map = Map<String, dynamic>.from(data as Map);
+    // 이번 업데이트가 대응해야 할 턴 번호를 함께 저장
+    map['__seq'] = _turnSeq;
+    _statusQueue.add(map);
     if (!_isAnimating) {
       _drainStatusQueue();
     }
@@ -320,6 +349,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     _isAnimating = true;
     while (_statusQueue.isNotEmpty) {
       final map = _statusQueue.removeAt(0);
+      final seq = (map['__seq'] as int?) ?? 0;
+
+      // 이미 처리한 턴이라면 skip (중복 방지)
+      if (seq <= _handledSeq) continue;
 
       final selfName = map['self']?.toString();
       final selfHp  = (map['selfHp'] as num?)?.toInt() ?? 0;
@@ -337,7 +370,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       final playerTookDamage = newPlayerHp < prevPlayerHp;
       final enemyTookDamage  = newOpponentHp < prevOpponentHp;
 
-      // HP 먼저 반영
+      // HP 반영
       if (mounted) {
         setState(() {
           _playerHp   = newPlayerHp;
@@ -349,7 +382,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         });
       }
 
-      // 1) 공격자만 공격 모션 (메시지는 "공격 애니메이션 시작과 동시에" 표시)
+      // 1) 공격자만 공격 모션 (메시지는 동시에 표시)
       if (enemyTookDamage) {
         // 내가 공격자
         final dealt = prevOpponentHp - newOpponentHp;
@@ -360,24 +393,19 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             : 'Miss! 공격이 빗나갔습니다.');
         if (mounted) setState(() => _battleLog = msg);
 
-        await _playAttack(_playerAttackCtrl); // 메시지와 동시 시작
+        await _playAttack(_playerAttackCtrl);
 
-        // 2) 데미지 팝업/피격 깜빡임
         if (mounted) {
           _enemyDamageText = dealt > 0 ? '-$dealt' : 'MISS';
           _showEnemyDamage = true;
           setState(() {});
         }
-        _enemyDamageCtrl.reset();
-        await _enemyDamageCtrl.forward();        // 팝업 1초
-        await _blink(_enemyBlinkCtrl, cycles: 2);
+        await _playDamageAndBlink(damageCtrl: _enemyDamageCtrl, blinkCtrl: _enemyBlinkCtrl);
 
-        // 3) 패배 시 퇴장
         if (_opponentHp <= 0) {
           await _playDefeat(_enemyDefeatCtrl);
         }
 
-        // 4) 다음 차례 전 0.6초 대기
         await Future.delayed(const Duration(milliseconds: 600));
         if (mounted) {
           _showEnemyDamage = false;
@@ -393,16 +421,14 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             : 'Miss! 공격이 빗나갔습니다.');
         if (mounted) setState(() => _battleLog = msg);
 
-        await _playAttack(_enemyAttackCtrl); // 메시지와 동시 시작
+        await _playAttack(_enemyAttackCtrl);
 
         if (mounted) {
           _playerDamageText = taken > 0 ? '-$taken' : 'MISS';
           _showPlayerDamage = true;
           setState(() {});
         }
-        _playerDamageCtrl.reset();
-        await _playerDamageCtrl.forward();        // 팝업 1초
-        await _blink(_playerBlinkCtrl, cycles: 2);
+        await _playDamageAndBlink(damageCtrl: _playerDamageCtrl, blinkCtrl: _playerBlinkCtrl);
 
         if (_playerHp <= 0) {
           await _playDefeat(_playerDefeatCtrl);
@@ -414,46 +440,43 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           setState(() {});
         }
       } else {
-        // MISS (HP 변화 없음) — 예상 공격자 기준으로 처리
+        // MISS (HP 변화 없음) — 공격자는 이벤트에서 확정된 _currentAttackerIsMine 사용
         if (_pendingTurnMsg != null &&
             _pendingTurnMsg!.toLowerCase().contains('miss')) {
-          if (_expectedAttackerIsMine) {
+          if (_currentAttackerIsMine) {
             if (mounted) setState(() => _battleLog = _pendingTurnMsg!);
-            await _playAttack(_playerAttackCtrl); // 메시지와 동시
+            await _playAttack(_playerAttackCtrl);
             if (mounted) {
               _enemyDamageText = 'MISS';
               _showEnemyDamage = true;
               setState(() {});
             }
-            _enemyDamageCtrl.reset();
-            await _enemyDamageCtrl.forward();    // MISS 팝업 1초
-            await Future.delayed(const Duration(milliseconds: 200));
+            await _playDamageAndBlink(damageCtrl: _enemyDamageCtrl, blinkCtrl: _enemyBlinkCtrl);
+            await Future.delayed(const Duration(milliseconds: 600));
             if (mounted) {
               _showEnemyDamage = false;
               setState(() {});
             }
           } else {
             if (mounted) setState(() => _battleLog = _pendingTurnMsg!);
-            await _playAttack(_enemyAttackCtrl); // 메시지와 동시
+            await _playAttack(_enemyAttackCtrl);
             if (mounted) {
               _playerDamageText = 'MISS';
               _showPlayerDamage = true;
               setState(() {});
             }
-            _playerDamageCtrl.reset();
-            await _playerDamageCtrl.forward();
-            await Future.delayed(const Duration(milliseconds: 200));
+            await _playDamageAndBlink(damageCtrl: _playerDamageCtrl, blinkCtrl: _playerBlinkCtrl);
+            await Future.delayed(const Duration(milliseconds: 600));
             if (mounted) {
               _showPlayerDamage = false;
               setState(() {});
             }
           }
-          await Future.delayed(const Duration(milliseconds: 600));
         }
       }
 
-      // 턴 토글 및 메시지 초기화
-      _expectedAttackerIsMine = !_expectedAttackerIsMine;
+      // 이 턴 처리 완료
+      _handledSeq = seq;
       _pendingTurnMsg = null;
     }
     _isAnimating = false;
@@ -464,7 +487,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
   // ===== 보류된 nextRound / matchResult / roundResult 처리 =====
   Future<void> _tryProcessPending() async {
-    // 1) 라운드 승리 문구를 먼저 출력(애니 완주 후)
+    // 1) 라운드 승리 문구
     if (_pendingRoundResult != null &&
         !_isAnimating && _statusQueue.isEmpty &&
         !_playerDefeatCtrl.isAnimating && !_enemyDefeatCtrl.isAnimating) {
@@ -473,7 +496,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       await Future.delayed(const Duration(milliseconds: 800));
     }
 
-    // 2) nextRound가 있으면 우선 처리
+    // 2) 다음 라운드
     if (_pendingNextRoundData != null &&
         !_isAnimating && _statusQueue.isEmpty &&
         !_playerDefeatCtrl.isAnimating && !_enemyDefeatCtrl.isAnimating) {
@@ -483,7 +506,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       return;
     }
 
-    // 3) 최종 결과가 보류 중이면 처리
+    // 3) 최종 결과
     if (_pendingMatchResult != null &&
         !_isAnimating && _statusQueue.isEmpty &&
         !_playerDefeatCtrl.isAnimating && !_enemyDefeatCtrl.isAnimating) {
@@ -516,27 +539,27 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   Future<void> _processMatchResult(String msg) async {
     if (!mounted) return;
 
-    // 승/패 판단 (서버 메시지에 내 uid가 포함되면 승리)
+    // 승/패 판단 (메시지 내용에 맞게 판단 로직 조정 가능)
     final iWon = msg.contains(widget.userUid);
 
     setState(() {
       _battleLog = msg;
       _isVictory = iWon;
       _showResultOverlay = true;
+      _allowDismissOverlay = false; // 애니 끝나기 전에는 탭 무시
     });
 
     if (iWon) {
       _victoryCtrl.reset();
       await _victoryCtrl.forward();
-      await Future.delayed(const Duration(milliseconds: 700));
     } else {
       _defeatCtrl.reset();
       await _defeatCtrl.forward();
-      await Future.delayed(const Duration(milliseconds: 700));
     }
 
-    if (!mounted) return;
-    Navigator.of(context).pop();
+    if (mounted) {
+      setState(() => _allowDismissOverlay = true);
+    }
   }
 
   // ===== 실제 nextRound 반영 =====
@@ -585,6 +608,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       _playerDamageCtrl.reset();
       _enemyDamageCtrl.reset();
 
+      // 시퀀스 초기화
+      _turnSeq = 0;
+      _handledSeq = 0;
+
       setState(() {
         _myRemaining  = newMy;
         _oppRemaining = newOpp;
@@ -610,7 +637,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         _enemyDamageText  = '';
         _pendingTurnMsg   = null;
         _pendingRoundResult = null;
-        _showResultOverlay = false; // 혹시 이전 오버레이가 남아있지 않도록
+        _showResultOverlay = false;
+        _allowDismissOverlay = false;
       });
     } catch (e) {
       setState(() {
@@ -735,7 +763,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          // 배경: 화면 꽉 채우기
+          // 배경
           const Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -951,29 +979,33 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           // ======= 최종 결과 오버레이 (승리/패배) =======
           if (_showResultOverlay)
             Positioned.fill(
-              child: Container(
-                color: Colors.black54,
-                child: Center(
-                  child: SizedBox(
-                    width: overlayWidth,
-                    child: _isVictory
-                        ? FadeTransition(
-                      opacity: _victoryFade,
-                      child: ScaleTransition(
-                        scale: _victoryScale,
-                        child: Image.asset(
-                          'assets/images/victory.png',
-                          fit: BoxFit.contain,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _allowDismissOverlay ? () => Navigator.of(context).pop() : null,
+                child: Container(
+                  color: Colors.black54,
+                  child: Center(
+                    child: SizedBox(
+                      width: overlayWidth,
+                      child: _isVictory
+                          ? FadeTransition(
+                        opacity: _victoryFade,
+                        child: ScaleTransition(
+                          scale: _victoryScale,
+                          child: Image.asset(
+                            'assets/images/victory.png',
+                            fit: BoxFit.contain,
+                          ),
                         ),
-                      ),
-                    )
-                        : FadeTransition(
-                      opacity: _defeatFade,
-                      child: SlideTransition(
-                        position: _defeatSlide,
-                        child: Image.asset(
-                          'assets/images/defeat.png',
-                          fit: BoxFit.contain,
+                      )
+                          : FadeTransition(
+                        opacity: _defeatFade,
+                        child: SlideTransition(
+                          position: _defeatSlide,
+                          child: Image.asset(
+                            'assets/images/defeat.png',
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
                     ),
