@@ -15,5 +15,17 @@ loading_character_female.json 파일은 만들면 진행)
 https://app.runwayml.com/video-tools/teams/parkjunghoon011004/ai-tools/generate
 
 추후에 해야하는 것
-1. dictionary_page.dart
-도감에 있는 카드들이 assets/cards 폴더 안의 json 파일들을 사용자가 볼 수 있도록 자동으로 업데이트되는 기능
+1. card_selection_page.dart
+도감에 있는 카드들을 동기적으로 불러 오도록 하는 법
+(아래 설명 참고)
+data/data/com.insect.cbnu/app_flutter/insect_photos/
+
+실시간으로 만들어지는 JSON 파일은 위의 폴더 경로 안에 있음
+즉, insect_photos 폴더 안에 있음.
+
+안드로이드 스튜디오에서 휴대폰 내부에 저장된 JSON 파일 보는 법
+1) 왼쪽 상단에 가로 선 4개인거 클릭
+2) view > Tool windows > Device explorer 클릭
+3) 우측에 뜸
+4) data/data/com.insect.cbnu/app_flutter/insect_photos/ 찾아가서 클릭
+5) insect_photos 폴더 안에 JSON 파일로 저장되어 있음
