@@ -33,6 +33,38 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   pigeon: ^25.3.2
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  # 공용 기본 아이콘(1024x1024 권장)
+  image_path: assets/icons/app_icon.png
+
+  # 모바일
+  android: true
+  ios: true
+  min_sdk_android: 21
+  # (선택) 안드로이드 Adaptive 아이콘을 더 예쁘게 하고 싶다면 아래 두 줄도 추가 가능
+  # adaptive_icon_foreground: assets/icons/app_icon.png
+  # adaptive_icon_background: "#6BC36B"
+
+  # 웹
+  web:
+    generate: true
+    image_path: assets/icons/app_icon.png
+    background_color: "#6BC36B"
+    theme_color: "#6BC36B"
+
+  # 데스크톱들 — 모두 Map 형태여야 함
+  windows:
+    generate: true
+    image_path: assets/icons/app_icon.png
+    icon_size: 48   # 선택 (기본 48)
+  macos:
+    generate: true
+    image_path: assets/icons/app_icon.png
+  linux:
+    generate: true
+    image_path: assets/icons/app_icon.png
 
 flutter:
   uses-material-design: true
