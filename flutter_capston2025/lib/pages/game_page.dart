@@ -60,13 +60,15 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   late final Animation<Offset> _enemyDefeatSlide;
   late final Animation<double> _enemyDefeatFade;
 
-  // ===== 데미지 팝업(위로 떠오르며 사라짐) =====
+  // ===== 데미지 팝업(위로 떠오르며 사라짐) — 2초 고정 =====
   late final AnimationController _playerDamageCtrl;
   late final Animation<Offset> _playerDamageSlide;
   late final Animation<double> _playerDamageFade;
   late final AnimationController _enemyDamageCtrl;
   late final Animation<Offset> _enemyDamageSlide;
   late final Animation<double> _enemyDamageFade;
+
+  static const int kDamagePopupMs = 1000; // <-- 데미지 팝업 총 시간 2초
 
   // ====== 매치 결과 오버레이(승리/패배) ======
   late final AnimationController _victoryCtrl;
@@ -91,6 +93,12 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   String _playerDamageText = '';
   String _enemyDamageText = '';
 
+  // 데미지 텍스트 스타일(타입 상성 반영)
+  Color _playerDamageColor = Colors.red;
+  Color _enemyDamageColor  = Colors.red;
+  FontWeight _playerDamageWeight = FontWeight.w700;
+  FontWeight _enemyDamageWeight  = FontWeight.w700;
+
   int _roundNum = 1;
 
   // ===== 이벤트/애니메이션 큐 + 턴 시퀀스 =====
@@ -106,6 +114,55 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   int _turnSeq = 0;                   // 이벤트가 만든 현재 턴 번호
   int _handledSeq = 0;                // 처리 완료한 마지막 턴 번호
   String? _pendingTurnMsg;            // normal/critical/miss 문구
+
+  // ===== 타입 상성 테이블 =====
+  static const Map<String, String> _beats = {
+    '가위': '보',
+    '보': '바위',
+    '바위': '가위',
+  };
+
+  bool _defenderIsAdvantaged(String defenderType, String attackerType) =>
+      _beats[defenderType] == attackerType;
+
+  bool _defenderIsDisadvantaged(String defenderType, String attackerType) =>
+      _beats[attackerType] == defenderType;
+
+  String? _iconPath(String type) {
+    switch (type) {
+      case '가위':
+        return 'assets/icons/scissors.png';
+      case '바위':
+        return 'assets/icons/rock.png';
+      case '보':
+        return 'assets/icons/paper.png';
+      default:
+        return null;
+    }
+  }
+
+  // 피격자 기준 타입 상성에 따른 스타일/깜빡임 횟수(2초 기준)
+  // 유리: 진한 회색 + 2회, 보통: 빨강 + 3회, 불리: 진한 빨강 + 4회
+  // MISS: 진한 회색 + 0회(피격 깜빡임 없음)
+  ({Color color, FontWeight weight, int blinks}) _styleForHit({
+    required String defenderType,
+    required String attackerType,
+    required bool isMiss,
+  }) {
+    if (isMiss) {
+      return (color: Colors.grey.shade800, weight: FontWeight.w700, blinks: 0);
+    }
+    if (_defenderIsAdvantaged(defenderType, attackerType)) {
+      // 유리: 진한 회색, 2회 깜빡임
+      return (color: Colors.grey.shade800, weight: FontWeight.w700, blinks: 2);
+    }
+    if (_defenderIsDisadvantaged(defenderType, attackerType)) {
+      // 불리: 진한 빨강, 4회 깜빡임
+      return (color: Colors.red.shade700, weight: FontWeight.w900, blinks: 4);
+    }
+    // 보통: 기본 빨강, 3회 깜빡임
+    return (color: Colors.red, weight: FontWeight.w700, blinks: 3);
+  }
 
   @override
   void initState() {
@@ -126,7 +183,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         .chain(CurveTween(curve: Curves.easeOut))
         .animate(_enemyAttackCtrl);
 
-    // 깜빡임(피격 표시)
+    // 깜빡임(피격 표시) — duration은 매 호출 때 동적으로 설정
     _playerBlinkCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 120));
     _playerBlinkOpacity = Tween<double>(begin: 1.0, end: 0.35).animate(
       CurvedAnimation(parent: _playerBlinkCtrl, curve: Curves.easeInOut),
@@ -153,8 +210,8 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         .chain(CurveTween(curve: Curves.easeIn))
         .animate(_enemyDefeatCtrl);
 
-    // 데미지 팝업(1초)
-    _playerDamageCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+    // 데미지 팝업(위로 떠오르며 사라짐) — 2초 고정
+    _playerDamageCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: kDamagePopupMs));
     _playerDamageSlide = Tween<Offset>(begin: Offset.zero, end: const Offset(0, -0.7))
         .chain(CurveTween(curve: Curves.easeOut))
         .animate(_playerDamageCtrl);
@@ -162,7 +219,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         .chain(CurveTween(curve: Curves.easeOut))
         .animate(_playerDamageCtrl);
 
-    _enemyDamageCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+    _enemyDamageCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: kDamagePopupMs));
     _enemyDamageSlide = Tween<Offset>(begin: Offset.zero, end: const Offset(0, -0.7))
         .chain(CurveTween(curve: Curves.easeOut))
         .animate(_enemyDamageCtrl);
@@ -240,17 +297,40 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     await ctrl.forward();
   }
 
-  // 데미지 팝업과 깜빡임을 "동시에" 실행
+  // 데미지 팝업(2초) + 깜빡임(횟수 가변) 병렬 실행
+  // blinkTimes == 0이면 깜빡임 없이 팝업만 2초 진행
   Future<void> _playDamageAndBlink({
     required AnimationController damageCtrl,
     required AnimationController blinkCtrl,
+    required int blinkTimes,
   }) async {
-    blinkCtrl.reset();
+    // 데미지 팝업 시간 확정(2초)
+    damageCtrl.duration = const Duration(milliseconds: kDamagePopupMs);
     damageCtrl.reset();
-    blinkCtrl.repeat(reverse: true);   // 깜빡임 시작
-    await damageCtrl.forward();        // 팝업(1초)과 동시에 진행
-    blinkCtrl.stop();                  // 팝업 종료 시점에 정지/리셋
+
+    if (blinkTimes <= 0) {
+      await damageCtrl.forward();
+      return;
+    }
+
+    // blinkTimes회가 정확히 2초 동안 일어나도록 1/2사이클(=forward or reverse) 시간 설정
+    final halfCycleMs = (kDamagePopupMs / (blinkTimes * 2)).round();
+    blinkCtrl.duration = Duration(milliseconds: halfCycleMs);
     blinkCtrl.reset();
+
+    await Future.wait([
+      damageCtrl.forward(),
+      _blinkExactTimes(blinkCtrl, blinkTimes),
+    ]);
+
+    blinkCtrl.reset();
+  }
+
+  Future<void> _blinkExactTimes(AnimationController ctrl, int times) async {
+    for (int i = 0; i < times; i++) {
+      await ctrl.forward();
+      await ctrl.reverse();
+    }
   }
 
   // ====== 상대 선택 카드 수신 → 전투 단계 진입 ======
@@ -384,7 +464,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
       // 1) 공격자만 공격 모션 (메시지는 동시에 표시)
       if (enemyTookDamage) {
-        // 내가 공격자
+        // 내가 공격자 → 상대가 피격
         final dealt = prevOpponentHp - newOpponentHp;
         final attackerName = _mySelectedCard?.name ?? '나';
         final defenderName = _oppSelectedCard?.name ?? '상대';
@@ -395,12 +475,25 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
         await _playAttack(_playerAttackCtrl);
 
+        // 타입 상성 기반 스타일(피격자 기준)
+        final style = _styleForHit(
+          defenderType: _oppSelectedCard?.type ?? '',
+          attackerType: _mySelectedCard?.type ?? '',
+          isMiss: dealt <= 0,
+        );
+
         if (mounted) {
+          _enemyDamageColor  = style.color;
+          _enemyDamageWeight = style.weight;
           _enemyDamageText = dealt > 0 ? '-$dealt' : 'MISS';
           _showEnemyDamage = true;
           setState(() {});
         }
-        await _playDamageAndBlink(damageCtrl: _enemyDamageCtrl, blinkCtrl: _enemyBlinkCtrl);
+        await _playDamageAndBlink(
+          damageCtrl: _enemyDamageCtrl,
+          blinkCtrl: _enemyBlinkCtrl,
+          blinkTimes: style.blinks, // ← 2초 동안 2/3/4회 또는 0회
+        );
 
         if (_opponentHp <= 0) {
           await _playDefeat(_enemyDefeatCtrl);
@@ -412,7 +505,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           setState(() {});
         }
       } else if (playerTookDamage) {
-        // 상대가 공격자
+        // 상대가 공격자 → 내가 피격
         final taken = prevPlayerHp - newPlayerHp;
         final attackerName = _oppSelectedCard?.name ?? '상대';
         final defenderName = _mySelectedCard?.name ?? '나';
@@ -423,12 +516,24 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
         await _playAttack(_enemyAttackCtrl);
 
+        final style = _styleForHit(
+          defenderType: _mySelectedCard?.type ?? '',
+          attackerType: _oppSelectedCard?.type ?? '',
+          isMiss: taken <= 0,
+        );
+
         if (mounted) {
+          _playerDamageColor  = style.color;
+          _playerDamageWeight = style.weight;
           _playerDamageText = taken > 0 ? '-$taken' : 'MISS';
           _showPlayerDamage = true;
           setState(() {});
         }
-        await _playDamageAndBlink(damageCtrl: _playerDamageCtrl, blinkCtrl: _playerBlinkCtrl);
+        await _playDamageAndBlink(
+          damageCtrl: _playerDamageCtrl,
+          blinkCtrl: _playerBlinkCtrl,
+          blinkTimes: style.blinks, // ← 2초 동안 2/3/4회 또는 0회
+        );
 
         if (_playerHp <= 0) {
           await _playDefeat(_playerDefeatCtrl);
@@ -446,12 +551,25 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           if (_currentAttackerIsMine) {
             if (mounted) setState(() => _battleLog = _pendingTurnMsg!);
             await _playAttack(_playerAttackCtrl);
+
+            final style = _styleForHit(
+              defenderType: _oppSelectedCard?.type ?? '',
+              attackerType: _mySelectedCard?.type ?? '',
+              isMiss: true, // ← MISS: 진한 회색 + 깜빡임 0회
+            );
+
             if (mounted) {
+              _enemyDamageColor  = style.color;
+              _enemyDamageWeight = style.weight;
               _enemyDamageText = 'MISS';
               _showEnemyDamage = true;
               setState(() {});
             }
-            await _playDamageAndBlink(damageCtrl: _enemyDamageCtrl, blinkCtrl: _enemyBlinkCtrl);
+            await _playDamageAndBlink(
+              damageCtrl: _enemyDamageCtrl,
+              blinkCtrl: _enemyBlinkCtrl,
+              blinkTimes: style.blinks, // 0회 → 깜빡임 없음, 팝업만 2초
+            );
             await Future.delayed(const Duration(milliseconds: 600));
             if (mounted) {
               _showEnemyDamage = false;
@@ -460,12 +578,25 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
           } else {
             if (mounted) setState(() => _battleLog = _pendingTurnMsg!);
             await _playAttack(_enemyAttackCtrl);
+
+            final style = _styleForHit(
+              defenderType: _mySelectedCard?.type ?? '',
+              attackerType: _oppSelectedCard?.type ?? '',
+              isMiss: true,
+            );
+
             if (mounted) {
+              _playerDamageColor  = style.color;
+              _playerDamageWeight = style.weight;
               _playerDamageText = 'MISS';
               _showPlayerDamage = true;
               setState(() {});
             }
-            await _playDamageAndBlink(damageCtrl: _playerDamageCtrl, blinkCtrl: _playerBlinkCtrl);
+            await _playDamageAndBlink(
+              damageCtrl: _playerDamageCtrl,
+              blinkCtrl: _playerBlinkCtrl,
+              blinkTimes: style.blinks,
+            );
             await Future.delayed(const Duration(milliseconds: 600));
             if (mounted) {
               _showPlayerDamage = false;
@@ -678,6 +809,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   }
 
   Widget _cardTile(InsectCard c, {bool selected = false, bool tappable = false, VoidCallback? onTap}) {
+    final icon = _iconPath(c.type);
     return GestureDetector(
       onTap: tappable ? onTap : null,
       child: Container(
@@ -690,15 +822,25 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.file(
-                File(c.image),
-                width: 100,
-                height: 140,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white),
-              ),
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(c.image),
+                    width: 100,
+                    height: 140,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white),
+                  ),
+                ),
+                if (icon != null)
+                  Positioned(
+                    left: 6,
+                    bottom: 6,
+                    child: Image.asset(icon, width: 24, height: 24),
+                  ),
+              ],
             ),
             const SizedBox(height: 4),
             Text(c.name, style: const TextStyle(color: Colors.white), overflow: TextOverflow.ellipsis),
@@ -709,10 +851,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     );
   }
 
-  // 상대 엔트리(남은 카드 전부) — 고정 카드 하이라이트
+  // 상대 엔트리(남은 카드 전부) — 고정 카드 하이라이트 + 타입 아이콘
   Widget _opponentEntryTile(InsectCard c) {
     final isLocked = (_oppSelectedCard != null &&
         c.name == _oppSelectedCard!.name && c.type == _oppSelectedCard!.type);
+    final icon = _iconPath(c.type);
     return Stack(
       children: [
         Container(
@@ -725,15 +868,25 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             borderRadius: BorderRadius.circular(8),
             color: Colors.black54,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.file(
-              File(c.image),
-              width: 100,
-              height: 140,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white),
-            ),
+          child: Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.file(
+                  File(c.image),
+                  width: 100,
+                  height: 140,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white),
+                ),
+              ),
+              if (icon != null)
+                Positioned(
+                  left: 6,
+                  bottom: 6,
+                  child: Image.asset(icon, width: 24, height: 24),
+                ),
+            ],
           ),
         ),
         if (isLocked)
@@ -869,11 +1022,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                                 padding: const EdgeInsets.only(top: 6),
                                                 child: Text(
                                                   _enemyDamageText,
-                                                  style: const TextStyle(
-                                                    color: Colors.red,
+                                                  style: TextStyle(
+                                                    color: _enemyDamageColor,
                                                     fontSize: 22,
-                                                    fontWeight: FontWeight.bold,
-                                                    shadows: [
+                                                    fontWeight: _enemyDamageWeight,
+                                                    shadows: const [
                                                       Shadow(color: Colors.black, blurRadius: 6, offset: Offset(0, 1)),
                                                       Shadow(color: Colors.black, blurRadius: 6, offset: Offset(0, -1)),
                                                     ],
@@ -931,11 +1084,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                                 padding: const EdgeInsets.only(top: 6),
                                                 child: Text(
                                                   _playerDamageText,
-                                                  style: const TextStyle(
-                                                    color: Colors.red,
+                                                  style: TextStyle(
+                                                    color: _playerDamageColor,
                                                     fontSize: 22,
-                                                    fontWeight: FontWeight.bold,
-                                                    shadows: [
+                                                    fontWeight: _playerDamageWeight,
+                                                    shadows: const [
                                                       Shadow(color: Colors.black, blurRadius: 6, offset: Offset(0, 1)),
                                                       Shadow(color: Colors.black, blurRadius: 6, offset: Offset(0, -1)),
                                                     ],
