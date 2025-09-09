@@ -1,5 +1,4 @@
-﻿// 상태를 보기위해 콘솔 로그 부분 추가 #pjh 수정
-async function battle(player1, player2, callback) {
+﻿async function battle(player1, player2, callback) {
     console.log("⚔️ Battle Start");
 
     const delay = (ms) => new Promise((res) => setTimeout(res, ms));
