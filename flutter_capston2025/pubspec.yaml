@@ -14,7 +14,6 @@ dependencies:
   google_sign_in: ^7.1.0
   firebase_auth: ^5.3.4
   cloud_firestore: ^5.6.8
-  image_picker: ^1.1.2
   path_provider: ^2.1.5
   shared_preferences: ^2.3.0 # 테마 색상 저장을 위해 추가
   sticky_headers: ^0.3.0+2 # 날짜별 그룹화를 위해 추가
@@ -27,6 +26,8 @@ dependencies:
   xml: ^6.5.0 # XML 데이터 파싱용
   flutter_html: ^3.0.0-beta.2 # html 오류 수정 추가
   webview_flutter: ^4.7.0 # 번역 무료를 위한 추가 코드
+  path: ^1.9.0
+  camera: ^0.11.0+1
 
 dev_dependencies:
   flutter_test:

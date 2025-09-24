@@ -18,13 +18,8 @@ import 'firebase/firebase_options.dart';
 import 'storage/login_storage.dart';
 import 'utils/load_all_cards.dart';
 import 'socket/socket_service.dart';
-import 'services/camera_service.dart';
 import 'widgets/guide_dialog.dart';
-
-import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase/firebase_options.dart';
-import 'socket/socket_service.dart';
+import 'pages/camera_page.dart'; // ✅ 새 CameraPage 임포트
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -95,11 +90,15 @@ class _MainNavigationState extends State<MainNavigation> {
 
     if (!_isGuest && info.containsKey('uid')) {
       try {
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(info['uid']).get();
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(info['uid'])
+            .get();
         if (userDoc.exists && userDoc.data() != null) {
           userDoc.data()!.forEach((key, value) => info[key] = value);
           if (info['joinDate'] is Timestamp) {
-            info['joinDate'] = (info['joinDate'] as Timestamp).toDate().toIso8601String();
+            info['joinDate'] =
+                (info['joinDate'] as Timestamp).toDate().toIso8601String();
           }
           final prefs = await SharedPreferences.getInstance();
           if (info.containsKey('nickname')) {
@@ -226,7 +225,7 @@ class _MainNavigationState extends State<MainNavigation> {
     ];
 
     return Scaffold(
-      resizeToAvoidBottomInset: true, // 다시 true로 설정
+      resizeToAvoidBottomInset: true,
       body: pages[_selectedIndex],
       floatingActionButton: isKeyboardVisible
           ? null
@@ -248,12 +247,18 @@ class _MainNavigationState extends State<MainNavigation> {
             }
 
             if (shouldContinue) {
-              await captureAndSavePhoto(
-                context: context,
-                onCompleted: () {
-                  _loadImages();
-                  _loadAllUserData();
-                },
+              // ✅ CameraPage로 이동
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CameraPage(
+                    themeColor: _themeColor,
+                    onPhotoTaken: () {
+                      _loadImages();
+                      _loadAllUserData();
+                    },
+                  ),
+                ),
               );
             }
           },

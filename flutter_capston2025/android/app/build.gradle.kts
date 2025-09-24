@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.insect.cbnu" // ✅ Firebase와 일치
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
 
     compileOptions {
