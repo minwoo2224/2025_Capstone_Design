@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'insect_detail_page.dart';
+import '../widgets/themed_background.dart';
 
 class InsectPage extends StatefulWidget {
   final Color themeColor;
@@ -132,7 +133,11 @@ class _InsectPageState extends State<InsectPage> {
           const SizedBox(height: 4),
           Text(
             insect['name'] ?? 'Unknown',
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.black87,
+            ),
           ),
         ],
       ),
@@ -142,27 +147,34 @@ class _InsectPageState extends State<InsectPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1C1C3A),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: _insects.isEmpty
-            ? const Center(
-          child: Text(
-            '저장된 곤충이 없습니다.',
-            style: TextStyle(color: Colors.white70, fontSize: 18),
+      body: ThemedBackground(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: _insects.isEmpty
+              ? Center(
+            child: Text(
+              '저장된 곤충이 없습니다.',
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.black87,
+                fontSize: 18,
+              ),
+            ),
+          )
+
+              : GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 0.9,
+            ),
+            itemCount: _insects.length,
+            itemBuilder: (context, index) {
+              return _buildInsectCard(_insects[index]);
+            },
           ),
-        )
-            : GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 0.9,
-          ),
-          itemCount: _insects.length,
-          itemBuilder: (context, index) {
-            return _buildInsectCard(_insects[index]);
-          },
         ),
       ),
     );

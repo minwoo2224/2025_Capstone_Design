@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId = "com.insect.cbnu" // ✅ Firebase와 일치
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
