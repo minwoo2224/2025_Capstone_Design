@@ -29,3 +29,14 @@ data/data/com.insect.cbnu/app_flutter/insect_photos/
 3) 우측에 뜸
 4) data/data/com.insect.cbnu/app_flutter/insect_photos/ 찾아가서 클릭
 5) insect_photos 폴더 안에 JSON 파일로 저장되어 있음
+
+변경된 사항들
+-gallery_page.dart
+-collection_page.dart
+-insect_page.dart
+-search_page.dart
+-main.dart
+-user_setting_page.dart
+-app_theme.dart
+-themed_background.dart
+-pubspec.yaml

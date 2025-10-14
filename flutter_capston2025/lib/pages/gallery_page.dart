@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sticky_headers/sticky_headers.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
+import '../widgets/themed_background.dart'; // 종이 테마 배경 위해
 
 class GalleryPage extends StatefulWidget {
   final Color themeColor;
@@ -96,14 +97,35 @@ class _GalleryPageState extends State<GalleryPage> {
   }
 
   void _showPreviewSettingSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
-      builder: (_) => Container(
+      backgroundColor: Theme.of(context).canvasColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => Padding(
         padding: const EdgeInsets.all(16),
         child: Wrap(
-          children: List.generate(6, (index) => index + 1).map((num) {
+          spacing: 12,
+          runSpacing: 12,
+          children: List.generate(6, (i) => i + 1).map((num) {
             return ElevatedButton(
               onPressed: () => _changePreviewColumns(num),
+              style: ElevatedButton.styleFrom(
+                // 텍스트 색: 라이트=검정, 다크=흰색 (이미 적용해둔 상태 유지)
+                foregroundColor: isDark ? Colors.white : Colors.black87,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                // ✅ 테두리 색: 라이트(종이/하양)=검정, 다크=기존 포인트 컬러 유지
+                side: BorderSide(
+                  color: isDark ? widget.themeColor : Colors.black87,
+                  width: 1.2,
+                ),
+                shape: const StadiumBorder(),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                elevation: 0,
+              ),
               child: Text('$num개 보기'),
             );
           }).toList(),
@@ -154,73 +176,103 @@ class _GalleryPageState extends State<GalleryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // 종이/하양: AppBar 색, 다크: 기존 색(widget.themeColor)
+    final Color fabColor = isDark
+        ? widget.themeColor
+        : (Theme.of(context).appBarTheme.backgroundColor ??
+        Colors.white);
+
     return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: _groupedImages.isEmpty
-                ? const Center(child: Text("사진이 없습니다.", style: TextStyle(fontSize: 18)))
-                : ListView.builder(
-              itemCount: _groupedImages.length,
-              itemBuilder: (context, index) {
-                final date = _groupedImages.keys.elementAt(index);
-                final images = _groupedImages[date]!;
-                return StickyHeader(
-                  header: Container(
-                    padding: const EdgeInsets.all(8.0),
-                    color: Colors.grey.shade200,
+      body: ThemedBackground(
+        child: Column(
+          children: [
+            Expanded(
+              child: _groupedImages.isEmpty
+                  ? Center(
                     child: Text(
-                      _formatDate(date),
-                      style: const TextStyle(
+                      "사진이 없습니다.",
+                      style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white70
+                            : Colors.black87,
                       ),
                     ),
-                  ),
-                  content: GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(8),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: _columns,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                    ),
-                    itemCount: images.length,
-                    itemBuilder: (context, idx) {
-                      final image = images[idx];
-                      return GestureDetector(
-                        onTap: () => _showImageDialog(image),
-                        onLongPress: () => _deleteImage(image),
-                        child: Builder(
-                          builder: (_) {
-                            try {
-                              return Image.file(image, fit: BoxFit.cover);
-                            } catch (e) {
-                              return Container(
-                                color: Colors.red.shade900,
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  'Invalid image',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              );
-                            }
-                          },
+                  )
+
+                  : ListView.builder(
+                itemCount: _groupedImages.length,
+                itemBuilder: (context, index) {
+                  final date = _groupedImages.keys.elementAt(index);
+                  final images = _groupedImages[date]!;
+
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
+                  final headerBg = isDark
+                      ? Colors.white.withOpacity(0.08)   // 다크: 살짝 밝은 오버레이
+                      : Colors.black.withOpacity(0.06);  // 라이트/종이: 살짝 어두운 오버레이
+                  final headerTitleColor = isDark ? Colors.white : Colors.black87;
+
+                  return StickyHeader(
+                    header: Container(
+                      padding: const EdgeInsets.all(8.0),
+                      color: headerBg,
+                      child: Text(
+                        _formatDate(date),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: headerTitleColor,
                         ),
-                      );
-                    },
-                  ),
-                );
-              },
+                      ),
+                    ),
+                    content: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(8),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: _columns,
+                        mainAxisSpacing: 8,
+                        crossAxisSpacing: 8,
+                      ),
+                      itemCount: images.length,
+                      itemBuilder: (context, idx) {
+                        final image = images[idx];
+                        return GestureDetector(
+                          onTap: () => _showImageDialog(image),
+                          onLongPress: () => _deleteImage(image),
+                          child: Builder(
+                            builder: (_) {
+                              try {
+                                return Image.file(image, fit: BoxFit.cover);
+                              } catch (e) {
+                                return Container(
+                                  color: Colors.red.shade900,
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'Invalid image',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: _showPreviewSettingSheet,
-        backgroundColor: widget.themeColor,
+        backgroundColor: fabColor,   // ← AppBar와 동일
+        // foregroundColor는 지정 안 함(기본값 사용). 필요하면 직접 정해도 됨.
         child: const Icon(Icons.grid_view),
       ),
     );

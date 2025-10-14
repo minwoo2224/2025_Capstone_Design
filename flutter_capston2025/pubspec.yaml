@@ -92,6 +92,7 @@ flutter:
     - assets/images/camera_page/space_bg.png
     - assets/images/background/forest_background.png
     - assets/images/background/loading_background.png
+    - assets/images/background/paper_texture.png
     - assets/images/family_detail_page/나비/
     - assets/images/family_detail_page/딱정벌레/
     - assets/images/family_detail_page/벌/

@@ -21,8 +21,14 @@ import 'socket/socket_service.dart';
 import 'widgets/guide_dialog.dart';
 import 'pages/camera_page.dart'; // ✅ 새 CameraPage 임포트
 
+import 'package:flutter/services.dart';
+import 'theme/app_theme.dart';
+
+late final ThemeController themeController;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   SocketService.connect(
     onCardsReceived: (_) {},
     onMatched: () {},
@@ -30,19 +36,35 @@ void main() async {
   );
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MyApp());
+
+  themeController = ThemeController();
+  await themeController.load();
+
+  runApp(MyApp(controller: themeController));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final ThemeController controller;
+  const MyApp({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '곤충 도감 앱',
-      theme: ThemeData.dark(),
-      debugShowCheckedModeBanner: false,
-      home: const TitleScreen(),
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final isPaperOrWhite = controller.isPaper || controller.isWhite;
+        SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+          statusBarColor: isPaperOrWhite ? Colors.white : const Color(0xFF121212),
+          statusBarIconBrightness: isPaperOrWhite ? Brightness.dark : Brightness.light,
+          statusBarBrightness: isPaperOrWhite ? Brightness.light : Brightness.dark,
+        ));
+        return MaterialApp(
+          title: '곤충 도감 앱',
+          theme: controller.materialTheme,
+          debugShowCheckedModeBanner: false,
+          home: const TitleScreen(),         // 기존 홈 유지
+        );
+      },
     );
   }
 }

@@ -84,7 +84,7 @@ class _NicknameEditorState extends State<NicknameEditor> {
     try {
       await updateNickname(widget.userUid, nickname);
       await markNicknameEditedToday();
-      await saveNicknameToTxt(nickname, guest: widget.isGuest); // 🔥 변경 즉시 txt 저장
+      await saveNicknameToTxt(nickname, guest: widget.isGuest);
 
       setState(() {
         _controller.text = nickname;
@@ -102,15 +102,35 @@ class _NicknameEditorState extends State<NicknameEditor> {
     return text.runes.where((r) => r >= 0xAC00 && r <= 0xD7A3).length;
   }
 
+  OutlineInputBorder _border(Color c) => OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    borderSide: BorderSide(color: c, width: 1.5),
+  );
+
   @override
   Widget build(BuildContext context) {
+    // ✅ 테마에 따라 색 결정 (다크: 기존 느낌 / 종이·하양: 검정 계열)
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final Color labelColor      = isDark ? Colors.amber     : Colors.black87; // "닉네임 (최대 8자)"
+    final Color fieldTextColor  = isDark ? Colors.white     : Colors.black87; // 입력 텍스트
+    final Color borderColor     = isDark ? Colors.white70   : Colors.black54; // 테두리
+    final Color fillColor       = isDark ? Colors.white12   : Colors.transparent; // 배경
+    final Color buttonBg        = const Color(0xFF673AB7); // = Colors.deepPurple(500) 느낌
+    final Color buttonTextColor = Colors.white;            // 텍스트는 계속 흰색
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("닉네임 (최대 8자)", style: TextStyle(color: Colors.amber, fontSize: 17)),
+          // ⬇️ 라벨(테마에 맞춰 색)
+          Text(
+            "닉네임 (최대 8자)",
+            style: TextStyle(color: labelColor, fontSize: 17),
+          ),
           const SizedBox(height: 6),
+
           Row(
             children: [
               GestureDetector(
@@ -125,39 +145,57 @@ class _NicknameEditorState extends State<NicknameEditor> {
                   controller: _controller,
                   readOnly: widget.isGuest || !_canEdit,
                   maxLength: 8,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
+                  // ⬇️ 입력 텍스트 색
+                  style: TextStyle(color: fieldTextColor),
+                  decoration: InputDecoration(
                     counterText: '',
                     filled: true,
-                    fillColor: Colors.white12,
-                    border: OutlineInputBorder(borderSide: BorderSide.none),
+                    fillColor: fillColor, // ⬅ 다크에서만 약한 배경, 라이트/종이는 투명
+                    // ⬇️ 라이트/종이에서 테두리 보이도록, 다크도 은은하게
+                    enabledBorder: _border(borderColor),
+                    focusedBorder: _border(buttonBg.withOpacity(0.8)),
+                    border: _border(borderColor),
+                    hintText: '닉네임',
+                    hintStyle: TextStyle(color: fieldTextColor.withOpacity(0.5)),
+                    contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   ),
                 ),
               ),
               const SizedBox(width: 10),
               ElevatedButton(
-                onPressed: (!_canEdit || widget.isGuest) ? () {
+                onPressed: (!_canEdit || widget.isGuest)
+                    ? () {
                   setState(() {
                     _status = widget.isGuest
                         ? '비회원은 닉네임 변경이 불가능 합니다.'
                         : '닉네임은 하루에 한 번만 수정 가능합니다.';
                   });
-                } : _updateNickname,
+                }
+                    : _updateNickname,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  backgroundColor: buttonBg,      // ⬅ 앱바/주색
+                  foregroundColor: buttonTextColor, // ⬅ 텍스트 흰색 고정
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: const Text('변경'),
               ),
             ],
           ),
+
           if (_status.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 6),
               child: Text(
                 _status,
                 style: TextStyle(
-                  color: _status.contains('성공') ? Colors.greenAccent : Colors.redAccent,
+                  color: _status.contains('성공')
+                      ? Colors.greenAccent
+                      : Colors.redAccent,
                 ),
               ),
             ),
