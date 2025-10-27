@@ -28,6 +28,8 @@ dependencies:
   webview_flutter: ^4.7.0 # 번역 무료를 위한 추가 코드
   path: ^1.9.0
   camera: ^0.11.0+1
+  tflite_flutter: ^0.10.4
+  image: ^4.5.4
 
 dev_dependencies:
   flutter_test:
@@ -119,6 +121,7 @@ flutter:
     - assets/translation_map.json #곤충 도감 번역 파일
     - assets/images/victory.png
     - assets/images/defeat.png
+    - assets/models/best_int8.tflite
 
   # assets:
   #   - images/a_dot_burr.jpeg
