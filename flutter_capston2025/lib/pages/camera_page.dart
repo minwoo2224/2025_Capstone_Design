@@ -95,52 +95,133 @@ class _CameraPageState extends State<CameraPage> {
     Navigator.of(context, rootNavigator: true).pop();
   }
 
-  /// 🔹 곤충 탐지
+  /// 🔹 곤충 탐지 (전처리/후처리 최적화)
   Future<Map<String, dynamic>?> _detectInsect(File imageFile) async {
     if (_interpreter == null) return null;
     final bytes = await imageFile.readAsBytes();
     final oriImage = img.decodeImage(bytes);
     if (oriImage == null) return null;
 
-    const inputSize = 640;
-    final resized = img.copyResize(oriImage, width: inputSize, height: inputSize);
+    // --- ✨ 1. (수정) 이미지 전처리: 비율 유지 리사이즈 (Letterboxing) ---
+    const double inputSize = 640.0;
+
+    // 원본 비율 유지를 위한 스케일 계산
+    final double scale = min(
+        inputSize / oriImage.width, inputSize / oriImage.height);
+    final int newWidth = (oriImage.width * scale).round();
+    final int newHeight = (oriImage.height * scale).round();
+
+    // 비율 맞춰 리사이즈
+    final resized = img.copyResize(
+        oriImage, width: newWidth, height: newHeight);
+
+    // 640x640 검은색 캔버스(패딩) 생성
+    final padded = img.Image(
+        width: inputSize.toInt(), height: inputSize.toInt());
+    img.fill(padded, color: img.ColorRgb8(0, 0, 0)); // 검은색으로 채우기
+
+    // 캔버스 중앙에 리사이즈된 이미지 붙여넣기
+    final int dx = (inputSize.toInt() - newWidth) ~/ 2; // x축 여백
+    final int dy = (inputSize.toInt() - newHeight) ~/ 2; // y축 여백
+    img.compositeImage(padded, resized, dstX: dx, dstY: dy);
+    // -------------------------------------------------------------
+
+    // --- ✨ 2. (수정) 입력 데이터 정규화 (Normalization) ---
     final input = List.generate(
       1,
-          (_) => List.generate(
-        inputSize,
-            (y) => List.generate(
-          inputSize,
-              (x) {
-            final pixel = resized.getPixel(x, y);
-            return [pixel.r.toDouble(), pixel.g.toDouble(), pixel.b.toDouble()];
-          },
-        ),
-      ),
+          (_) =>
+          List.generate(
+            inputSize.toInt(),
+                (y) =>
+                List.generate(
+                  inputSize.toInt(),
+                      (x) {
+                    final pixel = padded.getPixel(x, y);
+
+                    // ⚠️ [0, 1] 정규화 (가장 일반적인 방식)
+                    return [
+                      pixel.r.toDouble() / 255.0,
+                      pixel.g.toDouble() / 255.0,
+                      pixel.b.toDouble() / 255.0
+                    ];
+
+                    /* // ⚠️ 또는 [-1, 1] 정규화 (모델에 따라 다를 수 있음)
+          return [
+            (pixel.r.toDouble() - 127.5) / 127.5,
+            (pixel.g.toDouble() - 127.5) / 127.5,
+            (pixel.b.toDouble() - 127.5) / 127.5
+          ];
+          */
+                  },
+                ),
+          ),
     );
+    // ---------------------------------------------------------
+
     final output = List.filled(1 * 300 * 6, 0.0).reshape([1, 300, 6]);
     _interpreter!.run(input, output);
 
     double maxConf = 0.0;
     List? bestBox;
+
+    const double MAX_BOX_SIZE_THRESHOLD = 0.95;
+    const double MIN_CONFIDENCE_THRESHOLD = 0.1; // 인식률 0.1
+
     for (var box in output[0]) {
       final conf = box[4];
-      if (conf > maxConf) {
-        maxConf = conf;
-        bestBox = box;
+
+      // (수정) 0.1(최소 신뢰도)보다 높은 것들 중에서
+      if (conf > MIN_CONFIDENCE_THRESHOLD) {
+        final double w = box[2];
+        final double h = box[3];
+
+        // 비정상적인 크기(95% 이상)가 아니고
+        if (w < MAX_BOX_SIZE_THRESHOLD && h < MAX_BOX_SIZE_THRESHOLD) {
+          // 현재까지 찾은 것보다 신뢰도가 높으면
+          if (conf > maxConf) {
+            maxConf = conf;
+            bestBox = box;
+          }
+        }
       }
     }
 
-    if (bestBox == null || maxConf < 0.3) return null;
+    // (수정) bestBox가 null이거나, 찾았더라도 maxConf가 0.1 이하면 반환
+    if (bestBox == null) return null;
+
+    // --- ✨ 3. (수정) 후처리: 좌표 원본 기준으로 역산 ---
+    // 모델이 [x_center, y_center, w, h] 형식을 반환한다고 가정
+    final double x_center_norm = bestBox[0];
+    final double y_center_norm = bestBox[1];
+    final double w_norm = bestBox[2];
+    final double h_norm = bestBox[3];
+
+    // 1. [0, 1] 정규화된 좌표를 640x640 (패딩된) 픽셀 좌표로 변환
+    final double x_center_padded = x_center_norm * inputSize;
+    final double y_center_padded = y_center_norm * inputSize;
+    final double w_padded = w_norm * inputSize;
+    final double h_padded = h_norm * inputSize;
+
+    // 2. 중심 좌표를 (x_min, y_min) 픽셀 좌표로 변환
+    final double x_min_padded = x_center_padded - (w_padded / 2);
+    final double y_min_padded = y_center_padded - (h_padded / 2);
+
+    // 3. (✨ 핵심) 패딩(dx, dy)과 스케일(scale)을 역산하여 원본 이미지 픽셀 좌표로 변환
+    final double x_min_original = (x_min_padded - dx) / scale;
+    final double y_min_original = (y_min_padded - dy) / scale;
+    final double w_original = w_padded / scale;
+    final double h_original = h_padded / scale;
+
     return {
-      "x": bestBox[0] * oriImage.width,
-      "y": bestBox[1] * oriImage.height,
-      "width": bestBox[2] * oriImage.width,
-      "height": bestBox[3] * oriImage.height,
+      "x": x_min_original,
+      "y": y_min_original,
+      "width": w_original,
+      "height": h_original,
       "confidence": maxConf,
     };
   }
 
-  /// 🔹 이미지 자르기 (임시 파일명 변경)
+  /// 🔹 이미지 자르기
   Future<File> _cropImage(File imageFile, Map<String, dynamic> box) async {
     final decoded = img.decodeImage(await imageFile.readAsBytes());
     final fixed = img.bakeOrientation(decoded!);
