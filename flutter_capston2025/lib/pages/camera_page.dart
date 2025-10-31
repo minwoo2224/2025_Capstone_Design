@@ -316,7 +316,7 @@ class _CameraPageState extends State<CameraPage> {
   /// 🔹 서버 전송
   Future<Map<String, dynamic>> _sendToServer(File imageFile) async {
     try {
-      final uri = Uri.parse("https://54.180.112.140/predict");
+      final uri = Uri.parse("https://15.164.219.168/predict");
       final httpClient = HttpClient()
         ..badCertificateCallback =
             (X509Certificate cert, String host, int port) => true;
@@ -369,7 +369,7 @@ class _CameraPageState extends State<CameraPage> {
           ),
           content: Text(
             "이 곤충은 [${result['class']}] 입니다.\n"
-                "정확도: ${(result['confidence'] * 100).toStringAsFixed(1)} %",
+                "정확도: ${((result['confidence'] / 30) * 100).toStringAsFixed(1)} %",
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 18,
