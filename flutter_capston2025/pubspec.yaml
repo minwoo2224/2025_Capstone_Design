@@ -122,6 +122,37 @@ flutter:
     - assets/images/victory.png
     - assets/images/defeat.png
     - assets/models/best_int8.tflite
+    # --- 곤충 이미지 Asset 목록 ---
+    - assets/images/insects/ant.png
+    - assets/images/insects/hornet.png
+    - assets/images/insects/bee.png
+    - assets/images/insects/booklouse.png
+    - assets/images/insects/butterfly.png
+    - assets/images/insects/grasshopper.png
+    - assets/images/insects/cicada.png
+    - assets/images/insects/cockroach.png
+    - assets/images/insects/dragonfly.png
+    - assets/images/insects/earwig.png
+    - assets/images/insects/firefly.png
+    - assets/images/insects/fly.png
+    - assets/images/insects/house_centipede.png
+    - assets/images/insects/ladybug.png
+    - assets/images/insects/spotted_lanternfly.png
+    - assets/images/insects/longhorn_beetle.png
+    - assets/images/insects/mantis.png
+    - assets/images/insects/mayfly.png
+    - assets/images/insects/mosquito.png
+    - assets/images/insects/moth.png
+    - assets/images/insects/rove_beetle.png
+    - assets/images/insects/stag_beetle.png
+    - assets/images/insects/stick_insect.png
+    - assets/images/insects/stink_bug.png
+    - assets/images/insects/rhino_beetle.png
+    - assets/images/insects/water_strider.png
+    - assets/images/insects/cricket.png
+    - assets/images/insects/giant_water_bug.png
+    - assets/images/insects/dung_beetle.png
+    - assets/images/insects/default_insect.png # 대체 이미지 (혹시 모를 에러 대비)
 
   # assets:
   #   - images/a_dot_burr.jpeg

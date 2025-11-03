@@ -68,7 +68,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
   late final Animation<Offset> _enemyDamageSlide;
   late final Animation<double> _enemyDamageFade;
 
-  static const int kDamagePopupMs = 1000; // <-- 데미지 팝업 총 시간 2초
+  static const int kDamagePopupMs = 1000; // <-- 데미지 팝업 총 시간 1초 (애니메이션 편의상)
 
   // ====== 매치 결과 오버레이(승리/패배) ======
   late final AnimationController _victoryCtrl;
@@ -163,6 +163,76 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     // 보통: 기본 빨강, 3회 깜빡임
     return (color: Colors.red, weight: FontWeight.w700, blinks: 3);
   }
+
+  // ⭐️ 상대방 카드 이미지 로딩을 위한 Asset 경로 매핑 함수 (Name 기준) ⭐️
+  String _getInsectAssetPath(String name) {
+    // NOTE: 실제로 사용하시는 Asset 경로와 파일 확장자를 정확히 확인해야 합니다.
+    // 여기서는 'assets/images/insects/[곤충이름].png' 패턴을 가정합니다.
+
+    switch (name) {
+      case '개미':
+        return 'assets/images/insects/ant.png';
+      case '장수말벌':
+        return 'assets/images/insects/hornet.png';
+      case '벌':
+        return 'assets/images/insects/bee.png';
+      case '다듬이벌레':
+        return 'assets/images/insects/booklouse.png';
+      case '나비':
+        return 'assets/images/insects/butterfly.png';
+      case '메뚜기':
+        return 'assets/images/insects/grasshopper.png';
+      case '매미':
+        return 'assets/images/insects/cicada.png';
+      case '바퀴벌레':
+        return 'assets/images/insects/cockroach.png';
+      case '잠자리':
+        return 'assets/images/insects/dragonfly.png';
+      case '집게벌레':
+        return 'assets/images/insects/earwig.png';
+      case '반딧불이':
+        return 'assets/images/insects/firefly.png';
+      case '파리':
+        return 'assets/images/insects/fly.png';
+      case '그리마':
+        return 'assets/images/insects/house_centipede.png';
+      case '무당벌레':
+        return 'assets/images/insects/ladybug.png';
+      case '꽃매미':
+        return 'assets/images/insects/spotted_lanternfly.png';
+      case '하늘소':
+        return 'assets/images/insects/longhorn_beetle.png';
+      case '사마귀':
+        return 'assets/images/insects/mantis.png';
+      case '하루살이':
+        return 'assets/images/insects/mayfly.png';
+      case '모기':
+        return 'assets/images/insects/mosquito.png';
+      case '나방':
+        return 'assets/images/insects/moth.png';
+      case '반날개':
+        return 'assets/images/insects/rove_beetle.png';
+      case '사슴벌레':
+        return 'assets/images/insects/stag_beetle.png';
+      case '대벌레':
+        return 'assets/images/insects/stick_insect.png';
+      case '노린재':
+        return 'assets/images/insects/stink_bug.png';
+      case '장수풍뎅이':
+        return 'assets/images/insects/rhino_beetle.png';
+      case '소금쟁이':
+        return 'assets/images/insects/water_strider.png';
+      case '귀뚜라미':
+        return 'assets/images/insects/cricket.png';
+      case '물장군':
+        return 'assets/images/insects/giant_water_bug.png';
+      case '쇠똥구리':
+        return 'assets/images/insects/dung_beetle.png';
+      default:
+        return 'assets/images/insects/default_insect.png'; // 대체 이미지 경로
+    }
+  }
+
 
   @override
   void initState() {
@@ -492,7 +562,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         await _playDamageAndBlink(
           damageCtrl: _enemyDamageCtrl,
           blinkCtrl: _enemyBlinkCtrl,
-          blinkTimes: style.blinks, // ← 2초 동안 2/3/4회 또는 0회
+          blinkTimes: style.blinks, // ← 1초 동안 2/3/4회 또는 0회
         );
 
         if (_opponentHp <= 0) {
@@ -532,7 +602,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         await _playDamageAndBlink(
           damageCtrl: _playerDamageCtrl,
           blinkCtrl: _playerBlinkCtrl,
-          blinkTimes: style.blinks, // ← 2초 동안 2/3/4회 또는 0회
+          blinkTimes: style.blinks, // ← 1초 동안 2/3/4회 또는 0회
         );
 
         if (_playerHp <= 0) {
@@ -568,7 +638,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             await _playDamageAndBlink(
               damageCtrl: _enemyDamageCtrl,
               blinkCtrl: _enemyBlinkCtrl,
-              blinkTimes: style.blinks, // 0회 → 깜빡임 없음, 팝업만 2초
+              blinkTimes: style.blinks, // 0회 → 깜빡임 없음, 팝업만 1초
             );
             await Future.delayed(const Duration(milliseconds: 600));
             if (mounted) {
@@ -872,12 +942,12 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  File(c.image),
+                // ⭐️ 상대방 엔트리도 Asset 이미지로 대체 ⭐️
+                child: Image.asset(
+                  _getInsectAssetPath(c.name),
                   width: 100,
                   height: 140,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white),
                 ),
               ),
               if (icon != null)
@@ -1008,8 +1078,9 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                                     Stack(
                                       alignment: Alignment.topCenter,
                                       children: [
-                                        Image.file(
-                                          File(_oppSelectedCard!.image),
+                                        // ⭐️ 수정된 부분: Image.asset으로 상대 카드 로드 ⭐️
+                                        Image.asset(
+                                          _getInsectAssetPath(_oppSelectedCard!.name),
                                           height: 120,
                                           fit: BoxFit.cover,
                                         ),
@@ -1049,7 +1120,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
                     const Spacer(),
 
-                    // --- 내 카드(좌측 하단) ---
+                    // --- 내 카드(좌측 하단) --- (Image.file 유지)
                     Align(
                       alignment: Alignment.bottomLeft,
                       child: FadeTransition(

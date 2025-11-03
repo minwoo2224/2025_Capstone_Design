@@ -21,8 +21,9 @@ class _InsectDetailPageState extends State<InsectDetailPage> {
 
   @override
   void initState() {
-    super.initState()                                                                                                                                                                                                  ;
+    super.initState();
     _insectName = widget.insect['name'] ?? '이름없음';
+    // 이름 변경 기능이 삭제되었으므로, _insectName 변수는 초기 로드 후 변경되지 않습니다.
   }
 
   String _getIconPath(String type) {
@@ -43,20 +44,29 @@ class _InsectDetailPageState extends State<InsectDetailPage> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('정말 놓아줍니까?'),
+        content: const Text('저장된 곤충 카드를 삭제하시겠습니까?'),
         actions: [
           TextButton(
             onPressed: () async {
+              // 1. 다이얼로그 닫기
               Navigator.of(context).pop();
+              // 2. 상세 페이지 닫기
               Navigator.of(context).pop();
 
               final imageFile = File(widget.insect['image']);
+              // .jpg 파일을 .json 파일 경로로 대체하여 JSON 파일 경로를 계산
               final jsonFilePath = imageFile.path.replaceAll('.jpg', '.json');
               final jsonFile = File(jsonFilePath);
 
+              // 3. 파일 삭제
               if (await jsonFile.exists()) {
                 await jsonFile.delete();
               }
+              if (await imageFile.exists()) {
+                await imageFile.delete();
+              }
 
+              // 4. 콜백 호출
               widget.onDelete?.call();
             },
             child: const Text('예'),
@@ -70,61 +80,11 @@ class _InsectDetailPageState extends State<InsectDetailPage> {
     );
   }
 
-  void _editName(BuildContext context) {
-    final TextEditingController controller = TextEditingController(text: _insectName);
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('이름 수정'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLength: 8,
-          decoration: const InputDecoration(hintText: '새 이름을 입력하세요'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final newName = controller.text.trim();
-              if (newName.isEmpty) return;
-
-              setState(() {
-                _insectName = newName;
-              });
-
-              final imageFile = File(widget.insect['image']);
-              final jsonPath = imageFile.path.replaceAll('.jpg', '.json');
-              final jsonFile = File(jsonPath);
-
-              if (await jsonFile.exists()) {
-                try {
-                  final content = await jsonFile.readAsString();
-                  final data = jsonDecode(content) as Map<String, dynamic>;
-                  data['name'] = newName;
-                  await jsonFile.writeAsString(jsonEncode(data));
-                } catch (e) {
-                  debugPrint("이름 저장 실패: $e");
-                }
-              }
-
-              Navigator.of(context).pop();
-            },
-            child: const Text('예'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('아니오'),
-          ),
-        ],
-      ),
-    );
-  }
+  // NOTE: _editName(BuildContext context) 메서드는 요청에 따라 삭제됨
 
   @override
   Widget build(BuildContext context) {
     final iconPath = _getIconPath(widget.insect['type']);
-    final order = widget.insect['order'] ?? '';
     final health = widget.insect['health'];
 
     return Container(
@@ -164,30 +124,23 @@ class _InsectDetailPageState extends State<InsectDetailPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              GestureDetector(
-                onTap: () => _editName(context),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _insectName,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                        decoration: TextDecoration.underline,
-                      ),
+              // ⭐️ 이름 변경 기능 삭제 및 텍스트 스타일 수정 ⭐️
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _insectName,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black, // 색상 수정
+                      // decoration: TextDecoration.underline; // 밑줄 제거
                     ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.edit, size: 24, color: Colors.grey),
-                  ],
-                ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
-              Text(
-                '$order과',
-                style: const TextStyle(fontSize: 16, color: Colors.black),
-              ),
+              // ⭐️ order 표시 삭제됨 ⭐️
               const SizedBox(height: 4),
               Text(
                 '$health HP',
@@ -202,10 +155,11 @@ class _InsectDetailPageState extends State<InsectDetailPage> {
               ),
             ],
           ),
+          // ⭐️ 닫기 버튼 (왼쪽 아래) ⭐️
           Align(
-            alignment: Alignment.bottomCenter,
+            alignment: Alignment.bottomLeft,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.only(bottom: 16, left: 32),
               child: GestureDetector(
                 onTap: () => Navigator.of(context).pop(),
                 child: Container(
@@ -220,6 +174,7 @@ class _InsectDetailPageState extends State<InsectDetailPage> {
               ),
             ),
           ),
+          // ⭐️ 삭제 버튼 (오른쪽 아래) ⭐️
           Align(
             alignment: Alignment.bottomRight,
             child: Padding(
