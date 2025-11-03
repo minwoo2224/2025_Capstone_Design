@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+//251103 수정
+import 'package:share_plus/share_plus.dart';
 
 class InsectDetailPage extends StatefulWidget {
   final Map<String, dynamic> insect;
@@ -38,6 +40,24 @@ class _InsectDetailPageState extends State<InsectDetailPage> {
         return '';
     }
   }
+
+  //251103 수정---------------------------------------------------
+  Future<void> _shareImageOnly() async {
+    final imgPath = widget.insect['image']?.toString();
+
+    if (imgPath == null || imgPath.isEmpty || !File(imgPath).existsSync()) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('공유할 이미지 파일을 찾을 수 없어요.')),
+      );
+      return;
+    }
+
+    // 이미지 단독 공유 → 시스템 공유 시트에서 X/페북/인스타 선택 시
+    // 해당 앱의 새 글쓰기 화면으로 이동
+    await Share.shareXFiles([XFile(imgPath)]);
+  }
+  //------------------------------------------------------------
 
   void _confirmDeletion(BuildContext context) {
     showDialog(
@@ -193,8 +213,75 @@ class _InsectDetailPageState extends State<InsectDetailPage> {
               ),
             ),
           ),
+
+          // 공유 버튼 251103------------------------
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _ShareMiniButton(
+                label: '공유',
+                icon: Icons.share, // 원하면 Icons.ios_share 등으로 교체 가능
+                //251103 수정
+                onTap: _shareImageOnly,
+                // 테마 색을 쓰고 싶으면 아래 줄로 교체:
+                // bg: Theme.of(context).colorScheme.primary,
+                bg: const Color(0xFF6750A4), // 예: 보라톤 고정
+                fg: Colors.white,
+              ),
+            ),
+          )
+          //------------------------------------------------------
         ],
       ),
     );
   }
 }
+
+// 251103 수정-----------------------------------------------
+class _ShareMiniButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color bg;
+  final Color fg;
+
+  const _ShareMiniButton({
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    required this.bg,
+    required this.fg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 52, height: 52,
+            decoration: BoxDecoration(
+              color: bg,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 6,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: fg),
+          ),
+          SizedBox(height: 6),
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.black87)),
+        ],
+      ),
+    );
+  }
+}
+//-------------------------------------------------------------

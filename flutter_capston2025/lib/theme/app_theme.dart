@@ -67,7 +67,7 @@ class ThemeController extends ChangeNotifier {
               statusBarBrightness: Brightness.light,
             ),
           ),
-          bottomAppBarTheme: const BottomAppBarTheme(
+          bottomAppBarTheme: const BottomAppBarThemeData(
             color: Colors.white,
             elevation: 6,
           ),
@@ -94,7 +94,7 @@ class ThemeController extends ChangeNotifier {
               statusBarBrightness: Brightness.light,
             ),
           ),
-          bottomAppBarTheme: const BottomAppBarTheme(
+          bottomAppBarTheme: const BottomAppBarThemeData(
             color: Colors.white,
             elevation: 6,
           ),
