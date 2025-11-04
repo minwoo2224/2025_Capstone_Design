@@ -11,6 +11,8 @@ import 'package:http/io_client.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:flutter_capston2025/utils/insect_labels.dart';
+import 'package:flutter_capston2025/pages/insect_detail_page.dart';
+import 'package:flutter_capston2025/pages/insect_page.dart';
 
 class CameraPage extends StatefulWidget {
   final Color themeColor;
@@ -111,9 +113,9 @@ class _CameraPageState extends State<CameraPage> {
     img.Image(width: inputSize.toInt(), height: inputSize.toInt());
     img.fill(padded, color: img.ColorRgb8(0, 0, 0));
 
-    final int dx = (inputSize.toInt() - newWidth) ~/ 2;
-    final int dy = (inputSize.toInt() - newHeight) ~/ 2;
-    img.compositeImage(padded, resized, dstX: dx, dstY: dy);
+    final double dx = (inputSize - newWidth) / 2.0;
+    final double dy = (inputSize - newHeight) / 2.0;
+    img.compositeImage(padded, resized, dstX: dx.toInt(), dstY: dy.toInt());
 
     final input = List.generate(
       1,
@@ -170,10 +172,11 @@ class _CameraPageState extends State<CameraPage> {
     final double x_min_padded = x_center_padded - (w_padded / 2);
     final double y_min_padded = y_center_padded - (h_padded / 2);
 
-    final double x_min_original = (x_min_padded - dx) / scale;
-    final double y_min_original = (y_min_padded - dy) / scale;
-    final double w_original = w_padded / scale;
-    final double h_original = h_padded / scale;
+    // double dx, dy 유지 + 0.5 보정
+    final double x_min_original = ((x_min_padded - dx + 0.5) / scale).clamp(0, oriImage.width.toDouble());
+    final double y_min_original = ((y_min_padded - dy + 0.5) / scale).clamp(0, oriImage.height.toDouble());
+    final double w_original = (w_padded / scale).clamp(1, oriImage.width.toDouble());
+    final double h_original = (h_padded / scale).clamp(1, oriImage.height.toDouble());
 
     return {
       "x": x_min_original,
@@ -190,10 +193,13 @@ class _CameraPageState extends State<CameraPage> {
     final fixed = img.bakeOrientation(decoded);
     if (fixed == null) throw Exception("Failed to bake image orientation.");
 
-    final double x_in = box["x"];
-    final double y_in = box["y"];
-    final double w_in = box["width"];
-    final double h_in = box["height"];
+    // ✅ 박스 여유를 10% 확장하여 다리 잘림 방지
+    const double marginRatio = 0.1;
+
+    final double x_in = box["x"] - box["width"] * marginRatio / 2;
+    final double y_in = box["y"] - box["height"] * marginRatio / 2;
+    final double w_in = box["width"] * (1 + marginRatio);
+    final double h_in = box["height"] * (1 + marginRatio);
     final double x2_in = x_in + w_in;
     final double y2_in = y_in + h_in;
 
@@ -278,7 +284,7 @@ class _CameraPageState extends State<CameraPage> {
 
   Future<Map<String, dynamic>> _sendToServer(File imageFile) async {
     try {
-      final uri = Uri.parse("https://54.180.80.49/predict");
+      final uri = Uri.parse("https://54.180.159.93/predict");
       final httpClient = HttpClient()
         ..badCertificateCallback =
             (X509Certificate cert, String host, int port) => true;
@@ -311,38 +317,12 @@ class _CameraPageState extends State<CameraPage> {
   Future<void> _classifyAndSave() async {
     if (_croppedImage == null) return;
     await _showLoadingDialog();
+
     try {
       final result = await _sendToServer(_croppedImage!);
       _hideLoadingDialog();
 
-      // 결과 표시 (정확도 X)
-      await showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text(
-            "분류 결과",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          content: Text(
-            "이 곤충은 [${result['class']}] 입니다.",
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 18, height: 1.5),
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                "확인",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
-      );
-
-      // ✅ 결과창 이후 자동 저장
+      // ✅ 곤충 데이터 구성
       final dir = await getApplicationDocumentsDirectory();
       final photoDir = Directory('${dir.path}/insect_photos');
       if (!await photoDir.exists()) {
@@ -355,7 +335,6 @@ class _CameraPageState extends State<CameraPage> {
 
       final className = result['class'];
       final stats = InsectLabels.calculateStats(className);
-
       final rand = Random();
       const types = ['가위', '바위', '보'];
 
@@ -372,16 +351,49 @@ class _CameraPageState extends State<CameraPage> {
         'image': savedPath,
       };
 
-      final jsonFile =
-      File("${photoDir.path}/insect_$timestamp.json");
+      // ✅ JSON 저장 (기존 그대로 유지)
+      final jsonFile = File("${photoDir.path}/insect_$timestamp.json");
       await jsonFile.writeAsString(jsonEncode(insectData));
-      debugPrint("✅ 곤충 저장 완료: ${result['class']} ($savedPath)");
+
+      // ✅ "이 곤충은 [OOO] 입니다" 다이얼로그
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("분류 결과", textAlign: TextAlign.center),
+          content: Text("이 곤충은 [${result['class']}] 입니다."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("확인"),
+            ),
+          ],
+        ),
+      );
+
+      // ✅ 확인 후 InsectDetailPage로 바로 이동
+      if (mounted) {
+        // 1️⃣ InsectDetailPage를 먼저 push하고
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => InsectDetailPage(
+              insect: insectData,
+              onDelete: () {},
+            ),
+          ),
+        );
+        // ✅ Detail 페이지 닫은 후 CameraPage를 닫기만 (MainPage로 복귀)
+        if (mounted) {
+          Navigator.pop(context); // CameraPage 닫기 → MainPage의 Insect 탭이 다시 보임
+        }
+      }
 
     } catch (e) {
       _hideLoadingDialog();
       debugPrint("❌ 분류 오류: $e");
     }
   }
+
 
   Future<void> _resetToPreview() async {
     PaintingBinding.instance.imageCache.clear();

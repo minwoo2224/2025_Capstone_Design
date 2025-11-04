@@ -126,6 +126,7 @@ flutter:
     - assets/images/defeat.png
     - assets/models/best_int8.tflite
     # --- 곤충 이미지 Asset 목록 ---
+    - assets/images/insects/
     - assets/images/insects/ant.png
     - assets/images/insects/hornet.png
     - assets/images/insects/bee.png
@@ -156,6 +157,11 @@ flutter:
     - assets/images/insects/giant_water_bug.png
     - assets/images/insects/dung_beetle.png
     - assets/images/insects/default_insect.png # 대체 이미지 (혹시 모를 에러 대비)
+    # --- 배틀 이펙트 ---
+    - assets/effects/
+    - assets/effects/critical.gif
+    - assets/effects/pow.gif
+    - assets/effects/start.gif
 
   # assets:
   #   - images/a_dot_burr.jpeg

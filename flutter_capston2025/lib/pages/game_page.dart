@@ -25,6 +25,10 @@ class GamePage extends StatefulWidget {
 }
 
 class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
+  bool _showStartGif = false;
+  bool _showPowGif = false;
+  bool _isEnemyHit = false; // true면 상대 피격, false면 내 피격
+
   // 단계: 카드 선택(true) vs 전투(false)
   bool _inSelection = true;
 

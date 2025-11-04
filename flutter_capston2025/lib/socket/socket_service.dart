@@ -27,7 +27,7 @@ class SocketService {
     }
 
     socket = IO.io(
-      'http://192.168.134.5:8080',
+      'http://192.168.135.72:8080',
       <String, dynamic>{
         'transports': ['websocket'],
         'autoConnect': false,

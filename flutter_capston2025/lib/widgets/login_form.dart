@@ -301,7 +301,12 @@ class _LoginFormState extends State<LoginForm> {
               backgroundColor: Colors.deepPurple,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            child: Text(isLogin ? '로그인' : '회원가입', style: const TextStyle(fontSize: 16)),
+            child: Text(isLogin ? '로그인' : '회원가입',
+                style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                )
+            ),
           ),
           TextButton(
             onPressed: () => setState(() => isLogin = !isLogin),
