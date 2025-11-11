@@ -47,16 +47,27 @@ class _CameraPageState extends State<CameraPage> {
   Future<void> _initCamera() async {
     final cameras = await availableCameras();
     final firstCamera = cameras.first;
+
     _controller = CameraController(
       firstCamera,
-      ResolutionPreset.medium,
+      ResolutionPreset.ultraHigh, // ✅ 최고 해상도로 고정
       enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.jpeg, // ✅ 색공간 안전
     );
+
     _initializeControllerFuture = _controller!.initialize();
     await _initializeControllerFuture;
+
+    // ✅ 초점 안정화 및 약간의 딜레이
+    await Future.delayed(const Duration(milliseconds: 500));
+    await _controller!.setFocusMode(FocusMode.auto);
+    await _controller!.setFocusPoint(null);
+
     if (mounted) setState(() {});
-    debugPrint("📷 카메라 초기화 완료");
+    debugPrint("📷 카메라 초기화 완료 (ultraHigh + jpeg)");
   }
+
+
 
   Future<void> _loadModel() async {
     try {
@@ -447,10 +458,21 @@ class _CameraPageState extends State<CameraPage> {
                     return Stack(
                       alignment: Alignment.center,
                       children: [
-                        CameraPreview(_controller!, key: _previewKey),
+                        // ✅ 여백 제거 버전
+                        Positioned.fill(
+                          child: FittedBox(
+                            fit: BoxFit.cover, // 화면을 가득 채우기
+                            child: SizedBox(
+                              width: _controller!.value.previewSize!.height,
+                              height: _controller!.value.previewSize!.width,
+                              child: CameraPreview(_controller!, key: _previewKey),
+                            ),
+                          ),
+                        ),
+
+                        // 점선 가이드 유지
                         LayoutBuilder(builder: (context, constraints) {
-                          final double guideSize =
-                              constraints.maxWidth * 0.35;
+                          final double guideSize = constraints.maxWidth * 0.35;
                           return Center(
                             child: SizedBox(
                               width: guideSize,
@@ -466,35 +488,31 @@ class _CameraPageState extends State<CameraPage> {
                             ),
                           );
                         }),
-                        LayoutBuilder(
-                            builder: (context, constraints) {
-                              final double guideSize =
-                                  constraints.maxWidth * 0.35;
-                              return Positioned(
-                                top: (constraints.maxHeight / 2) +
-                                    (guideSize / 2) +
-                                    16,
-                                left: 0,
-                                right: 0,
-                                child: Text(
-                                  "곤충을 사각형 안에 맞춰주세요",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color:
-                                    Colors.white.withOpacity(0.9),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    shadows: [
-                                      Shadow(
-                                        blurRadius: 2,
-                                        color: Colors.black
-                                            .withOpacity(0.7),
-                                      ),
-                                    ],
+
+                        // 안내 문구
+                        LayoutBuilder(builder: (context, constraints) {
+                          final double guideSize = constraints.maxWidth * 0.35;
+                          return Positioned(
+                            top: (constraints.maxHeight / 2) + (guideSize / 2) + 16,
+                            left: 0,
+                            right: 0,
+                            child: Text(
+                              "곤충을 사각형 안에 맞춰주세요",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                shadows: [
+                                  Shadow(
+                                    blurRadius: 2,
+                                    color: Colors.black.withOpacity(0.7),
                                   ),
-                                ),
-                              );
-                            }),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
                       ],
                     );
                   } else {

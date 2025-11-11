@@ -12,9 +12,13 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <application
-        android:label="flutter_capston2025"
+        android:label="Insectoria"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        android:hardwareAccelerated="true"   <!-- ✅ GPU 렌더링 강제 활성화 -->
+        android:largeHeap="true"
+        android:usesCleartextTraffic="true"
+        tools:replace="android:hardwareAccelerated,android:largeHeap">
 
         <activity
             android:name=".MainActivity"

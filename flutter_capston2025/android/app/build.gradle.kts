@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.insect.cbnu" // ✅ Firebase와 일치
+        applicationId = "com.insect.cbnu"
         minSdk = 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -28,9 +28,22 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             // NOTE: replace this with your real release key config for production
             signingConfig = signingConfigs.getByName("debug")
+
+            isMinifyEnabled = true
+            isShrinkResources = true
+
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false
         }
     }
 }
