@@ -27,7 +27,7 @@ class SocketService {
     }
 
     socket = IO.io(
-      'http://192.168.133.136:8080',
+      'http://52.78.212.222:8080', //배틀서버 ip
       <String, dynamic>{
         'transports': ['websocket'],
         'autoConnect': false,

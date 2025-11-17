@@ -295,7 +295,7 @@ class _CameraPageState extends State<CameraPage> {
 
   Future<Map<String, dynamic>> _sendToServer(File imageFile) async {
     try {
-      final uri = Uri.parse("https://54.180.159.93/predict");
+      final uri = Uri.parse("https://3.36.71.72/predict");//분류서버 ip
       final httpClient = HttpClient()
         ..badCertificateCallback =
             (X509Certificate cert, String host, int port) => true;
